@@ -7,7 +7,37 @@ import { query } from './_generated/server'
 import type { GenericCtx } from '@convex-dev/better-auth'
 import type { DataModel } from './_generated/dataModel'
 
-const siteUrl = process.env.SITE_URL!
+// =============================================================================
+// Environment Variable Helpers
+// =============================================================================
+
+const REQUIRED_ENV_VARS = ['SITE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'] as const
+
+/**
+ * Check for missing env vars and log a helpful warning.
+ * Returns placeholder values if missing to allow push to succeed.
+ */
+function getEnvConfig() {
+  const siteUrl = process.env.SITE_URL
+  const googleClientId = process.env.GOOGLE_CLIENT_ID
+  const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
+
+  const missing = REQUIRED_ENV_VARS.filter(name => !process.env[name])
+
+  if (missing.length > 0) {
+    console.warn(`⚠️  MISSING CONVEX ENV VARS: ${missing.join(', ')}. Set with: npx convex env set <VAR> "value" or use Convex Dashboard → Settings → Environment Variables`)
+  }
+
+  return {
+    siteUrl: siteUrl || 'https://placeholder.convex.site',
+    googleClientId: googleClientId || 'placeholder-client-id',
+    googleClientSecret: googleClientSecret || 'placeholder-client-secret',
+    isConfigured: missing.length === 0,
+  }
+}
+
+// Get env config (warns if missing, uses placeholders to allow push)
+const envConfig = getEnvConfig()
 
 // Component client for Convex + Better Auth integration
 export const authComponent = createClient<DataModel>(components.betterAuth)
@@ -15,17 +45,22 @@ export const authComponent = createClient<DataModel>(components.betterAuth)
 // Create Better Auth instance with Convex adapter
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
   return betterAuth({
-    baseURL: siteUrl,
+    baseURL: envConfig.siteUrl,
     database: authComponent.adapter(ctx),
+    // Trusted origins for CORS
+    trustedOrigins: [
+      'http://localhost:3000',
+      'http://localhost:8787',
+      envConfig.siteUrl,
+    ],
     // Google OAuth
     socialProviders: {
       google: {
-        clientId: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        clientId: envConfig.googleClientId,
+        clientSecret: envConfig.googleClientSecret,
       },
     },
     plugins: [
-      // Required for Convex compatibility
       convex({ authConfig }),
     ],
   })

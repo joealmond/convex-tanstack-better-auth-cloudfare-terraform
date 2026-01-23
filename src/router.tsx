@@ -1,9 +1,10 @@
 import { createRouter } from '@tanstack/react-router'
-import { QueryClient, MutationCache } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query'
 import { ConvexQueryClient } from '@convex-dev/react-query'
 import { ConvexProvider, ConvexReactClient } from 'convex/react'
 import { routeTree } from './routeTree.gen'
 import { env } from './lib/env'
+import { NotFound } from './components/NotFound'
 
 export function getRouter() {
   const convexClient = new ConvexReactClient(env.VITE_CONVEX_URL)
@@ -32,9 +33,12 @@ export function getRouter() {
     defaultPreload: 'intent',
     context: { queryClient },
     scrollRestoration: true,
+    defaultNotFoundComponent: NotFound,
     Wrap: ({ children }) => (
       <ConvexProvider client={convexClient}>
-        {children}
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
       </ConvexProvider>
     ),
   })
@@ -47,3 +51,4 @@ declare module '@tanstack/react-router' {
     router: ReturnType<typeof getRouter>
   }
 }
+

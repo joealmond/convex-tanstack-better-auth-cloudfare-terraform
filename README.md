@@ -78,18 +78,33 @@ This template embodies **opinionated simplicity**:
 git clone <this-repo> && cd convex-tanstack-cloudflare
 npm install
 
-# 2. Configure
+# 2. Configure Vite environment
 cp .env.example .env.local
-# Edit .env.local with your values
+# Edit .env.local with your Convex URL
 
-# 3. Start Convex
-npx convex dev
+# 3. Set Convex backend environment variables
+npx convex env set SITE_URL "https://your-project.convex.site"
+npx convex env set GOOGLE_CLIENT_ID "your-google-client-id"
+npx convex env set GOOGLE_CLIENT_SECRET "your-google-client-secret"
 
-# 4. Run locally
+# 4. Start development (Convex + Vite concurrently)
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+### Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start dev server (Vite + Convex) |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build with Wrangler |
+| `npm run typecheck` | Run TypeScript checks |
+| `npm run lint` | Run ESLint |
+| `npm run generate:routes` | Regenerate TanStack Router route tree |
+| `npm run deploy:preview` | Deploy to preview environment |
+| `npm run deploy:prod` | Deploy to production |
 
 ---
 
@@ -188,11 +203,15 @@ terraform init && terraform apply
 
 ## Troubleshooting
 
-| Issue                | Solution                                     |
-| -------------------- | -------------------------------------------- |
+| Issue | Solution |
+|-------|----------|
 | Convex types missing | Run `npx convex login` then `npx convex dev` |
-| Workers build fails  | Check `nodejs_compat` in `wrangler.jsonc`    |
-| Auth not persisting  | Verify `SITE_URL` matches your app URL       |
+| Workers build fails | Check `nodejs_compat` in `wrangler.jsonc` |
+| Auth not persisting | Verify `SITE_URL` matches your app URL |
+| Missing env vars warning | Set Convex env vars: `npx convex env set SITE_URL "url"` |
+| Route types invalid | Run `npm run generate:routes` to regenerate route tree |
+| CORS errors on auth | Check `trustedOrigins` in `convex/auth.ts` |
+| SSR QueryClient error | Verify `QueryClientProvider` is in `router.tsx` Wrap |
 
 ---
 

@@ -2,6 +2,72 @@
 
 This document covers optional features you can add to the template.
 
+## Already Included ✅
+
+The template comes with these UI utilities pre-installed:
+
+### Sonner (Toast Notifications)
+
+Already installed! Use it like:
+
+```tsx
+import { toast } from 'sonner'
+
+// Show a toast
+toast.success('Message sent!')
+toast.error('Something went wrong')
+toast.info('FYI...')
+```
+
+The `<Toaster />` component is already in `__root.tsx`.
+
+### Class Utilities (cn function)
+
+The `cn()` utility for conditional class names is in `src/lib/cn.ts`:
+
+```tsx
+import { cn } from '@/lib/cn'
+
+<div className={cn('base-class', isActive && 'active-class', 'always-class')}>
+```
+
+### Lucide React (Icons)
+
+Already included! Import icons like:
+
+```tsx
+import { User, Settings, LogOut } from 'lucide-react'
+```
+
+### Radix UI Slot
+
+Already installed for composable components:
+
+```tsx
+import { Slot } from '@radix-ui/react-slot'
+```
+
+---
+
+## UI Extensions (Optional)
+
+### Shadcn UI
+
+Component library built on Radix UI primitives.
+
+```bash
+npx shadcn@latest init
+npx shadcn@latest add button card input dialog
+```
+
+### Framer Motion (Animations)
+
+```bash
+npm install framer-motion
+```
+
+---
+
 ## Alternative Technologies
 
 ### Authentication: Clerk
@@ -15,55 +81,11 @@ If you prefer pre-built UI components and easier setup, see [CLERK_SETUP.md](CLE
 
 ---
 
-## UI/UX Enhancements
+## Forms ✅
 
-### Shadcn UI
+### React Hook Form + Zod (Already Included)
 
-Component library built on Radix UI primitives.
-
-```bash
-npx shadcn@latest init
-npx shadcn@latest add button card input dialog
-```
-
-### Sonner (Toast Notifications)
-
-```bash
-npm install sonner
-```
-
-Add to your root layout:
-
-```tsx
-import { Toaster } from 'sonner'
-
-// In your component
-;<Toaster position="top-right" />
-```
-
-### Framer Motion (Animations)
-
-```bash
-npm install framer-motion
-```
-
-### Lucide React (Icons)
-
-Already included! Import icons like:
-
-```tsx
-import { User, Settings, LogOut } from 'lucide-react'
-```
-
----
-
-## Forms
-
-### React Hook Form + Zod
-
-```bash
-npm install react-hook-form @hookform/resolvers
-```
+The template includes react-hook-form with Zod validation. See `src/components/ExampleForm.tsx` for a complete example.
 
 ```tsx
 import { useForm } from 'react-hook-form'

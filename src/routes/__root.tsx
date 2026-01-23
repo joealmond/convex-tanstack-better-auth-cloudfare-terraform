@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext } from '@tanstack/react-router'
 import { Outlet, HeadContent, Scripts } from '@tanstack/react-router'
+import { Toaster } from 'sonner'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ImpersonateProvider } from '@/hooks/use-impersonate'
 import { AdminToolbar } from '@/components/AdminToolbar'
@@ -37,6 +38,7 @@ function RootComponent() {
             <Outlet />
           </ErrorBoundary>
           <AdminToolbar />
+          <Toaster />
         </ImpersonateProvider>
         <Scripts />
       </body>

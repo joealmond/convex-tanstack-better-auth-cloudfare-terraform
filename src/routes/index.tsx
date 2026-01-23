@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { api } from '@convex/_generated/api'
 import { useSession, signIn, signOut } from '@/lib/auth-client'
@@ -212,12 +212,11 @@ function HomePage() {
         <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
           <h2 className="font-semibold mb-2">✨ What's working here:</h2>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>✅ Real-time messages from Convex database</li>
-            <li>✅ Better Auth with Google OAuth</li>
-            <li>✅ Role-based access control (RBAC) with admin features</li>
-            <li>✅ SSR via TanStack Start</li>
-            <li>✅ Deployed on Cloudflare Workers</li>
-            <li>✅ Tailwind CSS styling</li>
+            <li>✅ Real-time Convex database + Better Auth (Google OAuth)</li>
+            <li>✅ SSR with TanStack Start + React Query</li>
+            <li>✅ RBAC, protected routes, toast notifications (Sonner)</li>
+            <li>✅ Form validation (react-hook-form + Zod), custom 404 page</li>
+            <li>✅ Vitest testing suite, Tailwind CSS, Cloudflare Workers</li>
           </ul>
           <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border">
             💡 <strong>Become Admin:</strong> Add your email to{' '}
