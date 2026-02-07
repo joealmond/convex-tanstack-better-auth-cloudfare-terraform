@@ -21,16 +21,16 @@ export const generateUploadUrl = mutation({
 async function uploadFile(file: File) {
   // Get upload URL from Convex
   const uploadUrl = await api.files.generateUploadUrl()
-  
+
   // Upload file to Convex Storage
   const result = await fetch(uploadUrl, {
     method: 'POST',
     headers: { 'Content-Type': file.type },
     body: file,
   })
-  
+
   const { storageId } = await result.json()
-  
+
   // Save metadata
   await api.files.saveFile({
     storageId,
@@ -202,7 +202,7 @@ export function FileUploadWithProgress() {
     })
 
     const { storageId } = JSON.parse(xhr.response)
-    
+
     // Save metadata
     await api.files.saveFile({
       storageId,
@@ -280,11 +280,11 @@ function validateFile(file: File): string | null {
   if (!ALLOWED_TYPES.includes(file.type)) {
     return `File type ${file.type} not allowed`
   }
-  
+
   if (file.size > MAX_FILE_SIZE) {
     return `File size exceeds ${formatFileSize(MAX_FILE_SIZE)}`
   }
-  
+
   return null
 }
 
@@ -305,7 +305,9 @@ Apply rate limiting to uploads:
 import { withFileUploadLimit } from './lib/middleware/withRateLimit'
 
 export const saveFile = mutation({
-  args: { /* ... */ },
+  args: {
+    /* ... */
+  },
   handler: withFileUploadLimit(async (ctx, args, user) => {
     return await ctx.db.insert('files', {
       ...args,
@@ -330,7 +332,7 @@ export const deleteFile = mutation({
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx)
     const file = await ctx.db.get(args.id)
-    
+
     if (file.uploadedBy !== user._id) {
       throw new Error('Not authorized')
     }
@@ -353,8 +355,24 @@ export const deleteFile = mutation({
 - ❌ Don't skip validation
 - ❌ Don't forget to delete storage when deleting records
 
+---
+
+## Storage Alternatives
+
+Convex native storage works great for most apps. For larger-scale needs, consider alternatives:
+
+| Solution            | Cost      | Best For                      |
+| ------------------- | --------- | ----------------------------- |
+| **Convex Native**   | $0.033/GB | <1 GB, simple setup           |
+| **Cloudflare R2**   | $0.015/GB | Already on Cloudflare         |
+| **Bunny.net (CDN)** | $0.01/GB  | Global CDN, large media       |
+| **Transloadit**     | $69/mo    | Video processing, transcoding |
+
+For most template users, Convex native storage is the right choice. Switch to R2 if you're already on Cloudflare and need cheaper storage at scale.
+
 ## Examples
 
 See working examples in:
-- [`convex/files.ts`](file:///Users/mandulaj/dev/source/convex-tanstack-cloudfare/convex/files.ts)
-- [`src/routes/files.tsx`](file:///Users/mandulaj/dev/source/convex-tanstack-cloudfare/src/routes/files.tsx)
+
+- `convex/files.ts` — Backend mutations for upload, save, list, delete
+- `src/routes/files.tsx` — Frontend upload UI with progress

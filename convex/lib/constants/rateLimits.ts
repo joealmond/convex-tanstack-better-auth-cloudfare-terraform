@@ -1,7 +1,7 @@
 /**
  * Rate Limit Configurations
  * ==========================
- * 
+ *
  * Centralized rate limit settings for the application.
  * Adjust these values based on your app's needs.
  */
@@ -103,6 +103,6 @@ export const RATE_LIMIT_MESSAGES = {
   DELETE_FILE: 'Too many deletions. Please slow down.',
   API_CALL: 'Too many requests. Please wait a minute.',
   LOGIN_ATTEMPT: 'Too many login attempts. Please wait a minute.',
-  REGISTER_USER: 'Too many registration att empts. Please try again later.',
+  REGISTER_USER: 'Too many registration attempts. Please try again later.',
   SEND_EMAIL: 'Too many emails sent. Please wait before sending more.',
 } as const

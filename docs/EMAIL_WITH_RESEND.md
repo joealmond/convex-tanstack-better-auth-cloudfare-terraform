@@ -4,14 +4,14 @@ Send transactional emails using Convex and Resend with built-in queuing, retries
 
 ## Why Resend + Convex?
 
-| Feature | Resend via Convex | DIY with nodemailer |
-|---------|-------------------|-------------------|
-| **Queuing** | ✅ Built-in, durable | ❌ Manual implementation |
-| **Retries** | ✅ Automatic on failure | ❌ Manual retry logic |
-| **Batching** | ✅ Auto-batches large volumes | ❌ Manual batching |
-| **Monitoring** | ✅ Convex dashboard | ❌ Separate monitoring needed |
-| **Idempotency** | ✅ Prevents duplicates | ❌ Manual deduplication |
-| **Free Tier** | ✅ 3,000 emails/month | ✅ Varies by provider |
+| Feature         | Resend via Convex             | DIY with nodemailer           |
+| --------------- | ----------------------------- | ----------------------------- |
+| **Queuing**     | ✅ Built-in, durable          | ❌ Manual implementation      |
+| **Retries**     | ✅ Automatic on failure       | ❌ Manual retry logic         |
+| **Batching**    | ✅ Auto-batches large volumes | ❌ Manual batching            |
+| **Monitoring**  | ✅ Convex dashboard           | ❌ Separate monitoring needed |
+| **Idempotency** | ✅ Prevents duplicates        | ❌ Manual deduplication       |
+| **Free Tier**   | ✅ 3,000 emails/month         | ✅ Varies by provider         |
 
 ## Quick Start
 
@@ -348,7 +348,9 @@ from: 'Your App <hello@yourapp.com>' // Use your domain
 export const sendEmail = action({
   handler: async (ctx, args) => {
     try {
-      const { data, error } = await resend.emails.send({ /* ... */ })
+      const { data, error } = await resend.emails.send({
+        /* ... */
+      })
 
       if (error) {
         // Log to Convex for monitoring
@@ -422,4 +424,4 @@ Start with free tier and upgrade as needed.
 - ✅ Use Service Adapter pattern for testability
 - ✅ Monitor in Resend dashboard
 
-See [`docs/ARCHITECTURE.md`](file:///Users/mandulaj/dev/source/convex-tanstack-cloudfare/docs/ARCHITECTURE.md) for the Service Adapter pattern details.
+See `docs/ARCHITECTURE.md` for the Service Adapter pattern details.

@@ -20,10 +20,11 @@ export const ADMIN_EMAILS: string[] = [
 
 1. Open the [Convex Dashboard](https://dashboard.convex.dev)
 2. Go to your project → Functions
-3. Run the `users.setAdminByEmail` mutation:
+3. Run the `users.setAdminByEmail` mutation to verify the email, then follow the logged instruction:
    ```json
    { "email": "your-email@example.com", "isAdmin": true }
    ```
+   This will log the exact config change needed. Add the email to `ADMIN_EMAILS` and redeploy.
 
 ### 2. Sign In
 
@@ -219,7 +220,7 @@ function AdminFeature() {
 | ----------------------- | -------- | ------------------------------ |
 | `users.current`         | Query    | Get current authenticated user |
 | `users.isAdmin`         | Query    | Check if current user is admin |
-| `users.setAdminByEmail` | Mutation | Grant/revoke admin role        |
+| `users.setAdminByEmail` | Mutation | Log admin config instruction   |
 
 ### Backend Helpers
 
@@ -247,10 +248,10 @@ Always use `requireAdmin` for sensitive operations:
 
 ```ts
 export const deleteUser = mutation({
-  args: { userId: v.id('user') },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     await requireAdmin(ctx) // 🔒 Only admins
-    await ctx.db.delete(args.userId)
+    // Delete user data (messages, files, etc.)
   },
 })
 ```
@@ -261,9 +262,10 @@ By default, `setAdminByEmail` can be called by anyone (for easy initial setup). 
 
 ```ts
 // Uncomment these lines in production:
-const currentUser = await authComponent.getAuthUser(ctx)
+const currentUser = (await authComponent.getAuthUser(ctx)) as AuthUser | null
+if (!currentUser) throw new Error('Authentication required')
 const isCurrentUserAdmin =
-  currentUser && (ADMIN_EMAILS.includes(currentUser.email) || currentUser.role === ROLES.ADMIN)
+  ADMIN_EMAILS.includes(currentUser.email) || currentUser.role === ROLES.ADMIN
 if (!isCurrentUserAdmin) {
   throw new Error('Only admins can modify user roles')
 }

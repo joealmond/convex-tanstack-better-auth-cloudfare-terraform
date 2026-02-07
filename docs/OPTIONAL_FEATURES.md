@@ -163,6 +163,75 @@ npm install posthog-js
 
 ---
 
+## Convex Extensions
+
+### Cron Jobs (Scheduled Tasks)
+
+Convex supports cron jobs natively for recurring tasks like daily cleanup or weekly reports.
+
+```typescript
+// convex/crons.ts
+import { cronJobs } from 'convex/server'
+import { internal } from './_generated/api'
+
+const crons = cronJobs()
+
+// Run daily at midnight UTC
+crons.daily('resetDailyLimits', { hourUTC: 0, minuteUTC: 0 }, internal.tasks.resetLimits)
+
+// Run every hour
+crons.interval('cleanupExpired', { hours: 1 }, internal.tasks.cleanupExpiredSessions)
+
+// Run weekly on Monday at 9am UTC
+crons.weekly('weeklyReport', { dayOfWeek: 'monday', hourUTC: 9 }, internal.tasks.generateReport)
+
+export default crons
+```
+
+See [Convex Cron Jobs docs](https://docs.convex.dev/scheduling/cron-jobs) for more options.
+
+### ShardedCounter (High-Write Counters)
+
+When a single document field receives more than ~100 writes/sec (e.g., vote counts, like counters), use sharded counters to avoid contention.
+
+```bash
+npm install @convex-dev/sharded-counter
+```
+
+```typescript
+// convex/convex.config.ts
+import { defineApp } from 'convex/server'
+import shardedCounter from '@convex-dev/sharded-counter/convex.config'
+
+const app = defineApp()
+app.use(shardedCounter)
+export default app
+```
+
+```typescript
+// convex/votes.ts
+import { ShardedCounter } from '@convex-dev/sharded-counter'
+import { components } from './_generated/api'
+
+const counter = new ShardedCounter(components.shardedCounter)
+
+// Increment
+await counter.add(ctx, 'product:123:votes', 1)
+
+// Read count
+const count = await counter.count(ctx, 'product:123:votes')
+```
+
+---
+
+## Mobile
+
+### Capacitor (Web → Native)
+
+Convert the web app to native iOS/Android by wrapping with Capacitor. See [MOBILE.md](MOBILE.md) for the full guide.
+
+---
+
 ## Internationalization
 
 ### react-i18next
@@ -248,7 +317,6 @@ npm install @unpic/react
 
 ```tsx
 import { Image } from '@unpic/react'
-
 ;<Image src="https://example.com/photo.jpg" width={800} height={600} alt="Description" />
 ```
 

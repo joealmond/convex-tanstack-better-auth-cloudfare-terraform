@@ -1,5 +1,3 @@
-'use client'
-
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -74,9 +72,7 @@ export function ExampleForm({ onSubmit }: ExampleFormProps) {
           )}
           placeholder="Your name"
         />
-        {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
-        )}
+        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
 
       {/* Email Field */}
@@ -95,9 +91,7 @@ export function ExampleForm({ onSubmit }: ExampleFormProps) {
           )}
           placeholder="you@example.com"
         />
-        {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
-        )}
+        {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
       </div>
 
       {/* Message Field */}
@@ -116,9 +110,7 @@ export function ExampleForm({ onSubmit }: ExampleFormProps) {
           )}
           placeholder="Your message..."
         />
-        {errors.message && (
-          <p className="text-sm text-destructive">{errors.message.message}</p>
-        )}
+        {errors.message && <p className="text-sm text-destructive">{errors.message.message}</p>}
       </div>
 
       {/* Submit Button */}

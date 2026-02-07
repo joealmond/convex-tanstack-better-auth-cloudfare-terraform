@@ -4,16 +4,9 @@ import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { api } from '@convex/_generated/api'
 import { useSession, signIn } from '@/lib/auth-client'
 import { formatFileSize, formatRelativeTime } from '@/lib/utils'
-import { 
-  Upload, 
-  File, 
-  Trash2, 
-  ArrowLeft, 
-  Loader2,
-  LogIn,
-  Download
-} from 'lucide-react'
+import { Upload, File, Trash2, ArrowLeft, Loader2, LogIn, Download } from 'lucide-react'
 import { useState, useRef } from 'react'
+import type { Id } from '@convex/_generated/dataModel'
 
 export const Route = createFileRoute('/files')({
   component: FilesPage,
@@ -85,7 +78,7 @@ function FilesPage() {
     if (!confirm('Are you sure you want to delete this file?')) return
 
     try {
-      await deleteFile({ id: id as any })
+      await deleteFile({ id: id as Id<'files'> })
     } catch (error) {
       console.error('Delete failed:', error)
     }
@@ -150,7 +143,7 @@ function FilesPage() {
         {/* Upload Section */}
         <div className="bg-card rounded-lg border border-border p-6 mb-6">
           <h2 className="font-semibold mb-4">Upload a File</h2>
-          
+
           <div className="flex items-center gap-4">
             <input
               ref={fileInputRef}

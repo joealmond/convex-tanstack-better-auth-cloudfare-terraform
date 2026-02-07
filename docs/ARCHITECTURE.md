@@ -108,10 +108,7 @@ export class UserRepository {
    * Get users with pagination
    */
   async paginate(limit: number, cursor?: string) {
-    return await this.ctx.db
-      .query('users')
-      .order('desc')
-      .paginate({ numItems: limit, cursor })
+    return await this.ctx.db.query('users').order('desc').paginate({ numItems: limit, cursor })
   }
 }
 
@@ -126,6 +123,7 @@ export const getUser = query({
 ```
 
 **Benefits**:
+
 - ✅ Single source of truth for queries
 - ✅ Easy to test (mock the repository)
 - ✅ Consistent API across your app
@@ -224,7 +222,7 @@ export class MockEmailService implements IEmailService {
 export const registerUser = mutation({
   handler: async (ctx, args) => {
     // ... create user ...
-    
+
     const emailService = new ResendEmailService(ctx, resendComponent)
     await emailService.sendWelcome(args.email, args.name)
   },
@@ -232,6 +230,7 @@ export const registerUser = mutation({
 ```
 
 **Benefits**:
+
 - ✅ Easy to swap implementations (Resend → SendGrid)
 - ✅ Testable (use mock in tests)
 - ✅ Rate limiting in one place
@@ -289,7 +288,7 @@ export class QueryFactory<T extends TableNames> {
    */
   recent(limit: number = 50) {
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-    
+
     return this.ctx.db
       .query(this.table)
       .filter((q) => q.gte(q.field('createdAt'), sevenDaysAgo))
@@ -323,6 +322,7 @@ export const listMessages = query({
 ```
 
 **Benefits**:
+
 - ✅ Consistent query patterns
 - ✅ DRY (Don't Repeat Yourself)
 - ✅ Easy to extend with new query types
@@ -390,6 +390,7 @@ export const sendMessage = mutation({
 ```
 
 **Benefits**:
+
 - ✅ Add features without modifying core logic
 - ✅ Composable (stack multiple decorators)
 - ✅ Reusable across many functions
@@ -403,6 +404,7 @@ export const sendMessage = mutation({
 Each module should have ONE reason to change.
 
 **❌ Bad** - God object doing everything:
+
 ```typescript
 export const userMutation = mutation({
   handler: async (ctx, args) => {
@@ -412,11 +414,12 @@ export const userMutation = mutation({
     // Log analytics
     // Update cache
     // Notify admin
-  }
+  },
 })
 ```
 
 **✅ Good** - Separate concerns:
+
 ```typescript
 export const registerUser = mutation({
   handler: async (ctx, args) => {
@@ -431,7 +434,7 @@ export const registerUser = mutation({
     await analytics.track('user_registered', { userId: user._id })
 
     return user
-  }
+  },
 })
 ```
 
@@ -440,6 +443,7 @@ export const registerUser = mutation({
 Pass dependencies instead of hard-coding them.
 
 **❌ Bad** - Hard-coded dependency:
+
 ```typescript
 async function sendEmail(to: string) {
   const resend = new Resend(process.env.RESEND_API_KEY!) // Hard-coded
@@ -448,6 +452,7 @@ async function sendEmail(to: string) {
 ```
 
 **✅ Good** - Injected dependency:
+
 ```typescript
 async function sendEmail(emailService: IEmailService, to: string) {
   await emailService.send({ to, ... }) // Can swap implementations
@@ -459,13 +464,21 @@ async function sendEmail(emailService: IEmailService, to: string) {
 Combine small functions instead of creating class hierarchies.
 
 **❌ Bad** - Inheritance:
+
 ```typescript
-class BaseRepository { /* ... */ }
-class UserRepository extends BaseRepository { /* ... */ }
-class MessageRepository extends BaseRepository { /* ... */ }
+class BaseRepository {
+  /* ... */
+}
+class UserRepository extends BaseRepository {
+  /* ... */
+}
+class MessageRepository extends BaseRepository {
+  /* ... */
+}
 ```
 
 **✅ Good** - Composition:
+
 ```typescript
 function createRepository<T>(ctx: Ctx, table: TableName) {
   return {
@@ -612,7 +625,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 export function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
 
-  if (!session?.user?.role === 'admin') {
+  if (session?.user?.role !== 'admin') {
     return <Navigate to="/" />
   }
 
@@ -641,7 +654,7 @@ export function handleError(error: unknown): never {
   if (error instanceof AuthenticationError) {
     throw new Error('Please sign in to continue')
   }
-  
+
   if (error instanceof AuthorizationError) {
     throw new Error('You do not have permission for this action')
   }
@@ -731,13 +744,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
 ### When to Apply These Patterns
 
-| Pattern | When to Use |
-|---------|-------------|
-| **Repository** | Complex queries used in multiple places |
-| **Adapter** | External API integration |
-| **Factory** | Creating similar objects repeatedly |
-| **Middleware** | Adding behavior to many functions |
-| **Custom Hooks** | Reusing frontend logic |
+| Pattern          | When to Use                             |
+| ---------------- | --------------------------------------- |
+| **Repository**   | Complex queries used in multiple places |
+| **Adapter**      | External API integration                |
+| **Factory**      | Creating similar objects repeatedly     |
+| **Middleware**   | Adding behavior to many functions       |
+| **Custom Hooks** | Reusing frontend logic                  |
 
 ### Further Reading
 

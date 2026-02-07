@@ -95,16 +95,16 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ### Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start dev server (Vite + Convex) |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build with Wrangler |
-| `npm run typecheck` | Run TypeScript checks |
-| `npm run lint` | Run ESLint |
-| `npm run generate:routes` | Regenerate TanStack Router route tree |
-| `npm run deploy:preview` | Deploy to preview environment |
-| `npm run deploy:prod` | Deploy to production |
+| Script                    | Description                            |
+| ------------------------- | -------------------------------------- |
+| `npm run dev`             | Start dev server (Vite + Convex)       |
+| `npm run build`           | Build for production                   |
+| `npm run preview`         | Preview production build with Wrangler |
+| `npm run typecheck`       | Run TypeScript checks                  |
+| `npm run lint`            | Run ESLint                             |
+| `npm run generate:routes` | Regenerate TanStack Router route tree  |
+| `npm run deploy:preview`  | Deploy to preview environment          |
+| `npm run deploy:prod`     | Deploy to production                   |
 
 ---
 
@@ -175,24 +175,28 @@ terraform init && terraform apply
 
 ## Documentation
 
-| Topic                   | Link                                                       |
-| ----------------------- | ---------------------------------------------------------- |
-| **Architecture Guide**  | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)               |
-| **Rate Limiting** ⚡    | [docs/RATE_LIMITING.md](docs/RATE_LIMITING.md)             |
-| **Email with Resend** ⚡| [docs/EMAIL_WITH_RESEND.md](docs/EMAIL_WITH_RESEND.md)     |
-| **Stripe Payments**     | [docs/STRIPE_PAYMENTS.md](docs/STRIPE_PAYMENTS.md)         |
-| **AI Integration**      | [docs/AI_INTEGRATION.md](docs/AI_INTEGRATION.md)           |
-| **File Uploads**        | [docs/FILE_UPLOADS.md](docs/FILE_UPLOADS.md)               |
-| **RBAC & Permissions**  | [docs/RBAC.md](docs/RBAC.md)                               |
-| **AI Guidelines**       | [docs/AI_GUIDELINES.md](docs/AI_GUIDELINES.md)             |
-| **Cloudflare Features** | [docs/CLOUDFLARE_FEATURES.md](docs/CLOUDFLARE_FEATURES.md) |
-| **AI & Integrations**   | [docs/AI_INTEGRATIONS.md](docs/AI_INTEGRATIONS.md)         |
-| **CI/CD Options**       | [docs/CI_CD_OPTIONS.md](docs/CI_CD_OPTIONS.md)             |
-| **Optional Features**   | [docs/OPTIONAL_FEATURES.md](docs/OPTIONAL_FEATURES.md)     |
-| **Clerk Auth Setup**    | [docs/CLERK_SETUP.md](docs/CLERK_SETUP.md)                 |
-| **Vercel Deploy**       | [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md)               |
-| **Netlify Deploy**      | [docs/NETLIFY_SETUP.md](docs/NETLIFY_SETUP.md)             |
-| **Terraform**           | [infrastructure/README.md](infrastructure/README.md)       |
+| Topic                    | Link                                                       |
+| ------------------------ | ---------------------------------------------------------- |
+| **Architecture Guide**   | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)               |
+| **Rate Limiting** ⚡     | [docs/RATE_LIMITING.md](docs/RATE_LIMITING.md)             |
+| **Email with Resend** ⚡ | [docs/EMAIL_WITH_RESEND.md](docs/EMAIL_WITH_RESEND.md)     |
+| **Stripe Payments**      | [docs/STRIPE_PAYMENTS.md](docs/STRIPE_PAYMENTS.md)         |
+| **AI Integration**       | [docs/AI_INTEGRATION.md](docs/AI_INTEGRATION.md)           |
+| **File Uploads**         | [docs/FILE_UPLOADS.md](docs/FILE_UPLOADS.md)               |
+| **RBAC & Permissions**   | [docs/RBAC.md](docs/RBAC.md)                               |
+| **AI Guidelines**        | [docs/AI_GUIDELINES.md](docs/AI_GUIDELINES.md)             |
+| **Cloudflare Features**  | [docs/CLOUDFLARE_FEATURES.md](docs/CLOUDFLARE_FEATURES.md) |
+| **AI & Integrations**    | [docs/AI_INTEGRATIONS.md](docs/AI_INTEGRATIONS.md)         |
+| **CI/CD Options**        | [docs/CI_CD_OPTIONS.md](docs/CI_CD_OPTIONS.md)             |
+| **Optional Features**    | [docs/OPTIONAL_FEATURES.md](docs/OPTIONAL_FEATURES.md)     |
+| **Clerk Auth Setup**     | [docs/CLERK_SETUP.md](docs/CLERK_SETUP.md)                 |
+| **Vercel Deploy**        | [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md)               |
+| **Netlify Deploy**       | [docs/NETLIFY_SETUP.md](docs/NETLIFY_SETUP.md)             |
+| **Mobile (Capacitor)**   | [docs/MOBILE.md](docs/MOBILE.md)                           |
+| **Future Roadmap**       | [docs/FUTURE_ROADMAP.md](docs/FUTURE_ROADMAP.md)           |
+| **Contributing**         | [CONTRIBUTING.md](CONTRIBUTING.md)                         |
+| **Changelog**            | [CHANGELOG.md](CHANGELOG.md)                               |
+| **Terraform**            | [infrastructure/README.md](infrastructure/README.md)       |
 
 ⚡ = Production-ready implementations included
 
@@ -211,15 +215,15 @@ terraform init && terraform apply
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Convex types missing | Run `npx convex login` then `npx convex dev` |
-| Workers build fails | Check `nodejs_compat` in `wrangler.jsonc` |
-| Auth not persisting | Verify `SITE_URL` matches your app URL |
-| Missing env vars warning | Set Convex env vars: `npx convex env set SITE_URL "url"` |
-| Route types invalid | Run `npm run generate:routes` to regenerate route tree |
-| CORS errors on auth | Check `trustedOrigins` in `convex/auth.ts` |
-| SSR QueryClient error | Verify `QueryClientProvider` is in `router.tsx` Wrap |
+| Issue                    | Solution                                                                   |
+| ------------------------ | -------------------------------------------------------------------------- |
+| Convex types missing     | Run `npx convex login` then `npx convex dev`                               |
+| Workers build fails      | Check `nodejs_compat` in `wrangler.jsonc`                                  |
+| Auth not persisting      | Verify `SITE_URL` matches your app URL                                     |
+| Missing env vars warning | Set Convex env vars: `npx convex env set SITE_URL "url"`                   |
+| Route types invalid      | Run `npm run generate:routes` to regenerate route tree                     |
+| CORS errors on auth      | Check `trustedOrigins` in `convex/auth.ts`                                 |
+| SSR QueryClient error    | Verify `ConvexProvider` and `QueryClientProvider` are in `router.tsx` Wrap |
 
 ---
 
@@ -229,7 +233,7 @@ This template was inspired by:
 
 - [srinivas-gangji/tanstack-convex-template](https://github.com/srinivas-gangji/tanstack-convex-template) - Production patterns and vite config
 
-Co-authored with [Antigravity](https://deepmind.google/) powered by [Claude Opus 4.5](https://anthropic.com/claude) (Anthropic).
+Co-authored with AI assistance powered by [Claude](https://anthropic.com/claude) (Anthropic).
 
 ---
 

@@ -59,9 +59,9 @@ Use convenience decorators for common scenarios:
 ```typescript
 import {
   withStandardRateLimit, // 60 req/min
-  withStrictRateLimit,   // 10 req/min
-  withFileUploadLimit,   // 5 uploads/min
-  withAuthRateLimit,     // 5 attempts/min
+  withStrictRateLimit, // 10 req/min
+  withFileUploadLimit, // 5 uploads/min
+  withAuthRateLimit, // 5 attempts/min
 } from './lib/middleware/withRateLimit'
 
 // Standard limit for API calls
@@ -83,19 +83,19 @@ export const sendEmail = mutation({
 
 ### Centralized Limits
 
-All rate limits are defined in [`convex/lib/constants/rateLimits.ts`](file:///Users/mandulaj/dev/source/convex-tanstack-cloudfare/convex/lib/constants/rateLimits.ts):
+All rate limits are defined in `convex/lib/constants/rateLimits.ts`:
 
 ```typescript
 export const RATE_LIMITS = {
   SEND_MESSAGE: {
     tokens: 1,
-    maxTokens: 10,      // 10 messages
-    period: 60 * 1000,  // per minute
+    maxTokens: 10, // 10 messages
+    period: 60 * 1000, // per minute
   },
   UPLOAD_FILE: {
     tokens: 1,
-    maxTokens: 5,       // 5 uploads
-    period: 60 * 1000,  // per minute
+    maxTokens: 5, // 5 uploads
+    period: 60 * 1000, // per minute
   },
   // ... more limits
 }
@@ -107,9 +107,9 @@ Premium users and admins automatically get higher limits:
 
 ```typescript
 export const ROLE_MULTIPLIERS = {
-  user: 1,        // Standard: 10 messages/min
-  premium: 5,     // Premium: 50 messages/min (5x)
-  admin: 100,     // Admin: 1000 messages/min (100x)
+  user: 1, // Standard: 10 messages/min
+  premium: 5, // Premium: 50 messages/min (5x)
+  admin: 100, // Admin: 1000 messages/min (100x)
 }
 ```
 
@@ -130,7 +130,7 @@ export const mutation = mutation({
       // Rate limit by IP or organization
       getKey: (ctx, args, user) => user.organizationId,
       // Custom role calculation
-      getRole: (user) => user.isPremium ? 'premium' : 'user',
+      getRole: (user) => (user.isPremium ? 'premium' : 'user'),
     }
   ),
 })
@@ -142,7 +142,7 @@ This rate limiting implementation showcases the template's architecture patterns
 
 ### Service Adapter Pattern
 
-[`RateLimitService`](file:///Users/mandulaj/dev/source/convex-tanstack-cloudfare/convex/lib/services/rateLimitService.ts) wraps `@convex-dev/rate-limiter`:
+`RateLimitService` (in `convex/lib/services/rateLimitService.ts`) wraps `@convex-dev/rate-limiter`:
 
 - ✅ Easy to swap implementations (production vs mock)
 - ✅ Testable (mock service for tests)
@@ -150,7 +150,7 @@ This rate limiting implementation showcases the template's architecture patterns
 
 ### Middleware/Decorator Pattern
 
-[`withRateLimit()`](file:///Users/mandulaj/dev/source/convex-tanstack-cloudfare/convex/lib/middleware/withRateLimit.ts) adds rate limiting without modifying core logic:
+`withRateLimit()` (in `convex/lib/middleware/withRateLimit.ts`) adds rate limiting without modifying core logic:
 
 - ✅ Reusable across mutations
 - ✅ Separates concerns
@@ -178,16 +178,16 @@ If using the included Terraform setup:
 # infrastructure/cloudflare.tf
 resource "cloudflare_rate_limit" "api_protection" {
   zone_id = var.cloudflare_zone_id
-  
+
   threshold = 1000  # requests
   period    = 60    # seconds
-  
+
   match {
     request {
       url_pattern = "*/api/*"
     }
   }
-  
+
   action {
     mode    = "challenge"  # Show CAPTCHA
     timeout = 600          # 10 minutes
@@ -204,12 +204,12 @@ terraform apply
 
 ### Why Add Cloudflare Layer?
 
-| Scenario | Cloudflare Needed? |
-|----------|-------------------|
-| Public API with high traffic | ✅ Yes - Protects infrastructure |
-| Internal tool, low traffic | ❌ No - Convex layer is sufficient |
-| Expecting bot attacks | ✅ Yes - Blocks at edge |
-| Tight budget | ❌ No - Free tier doesn't include rate limiting |
+| Scenario                     | Cloudflare Needed?                              |
+| ---------------------------- | ----------------------------------------------- |
+| Public API with high traffic | ✅ Yes - Protects infrastructure                |
+| Internal tool, low traffic   | ❌ No - Convex layer is sufficient              |
+| Expecting bot attacks        | ✅ Yes - Blocks at edge                         |
+| Tight budget                 | ❌ No - Free tier doesn't include rate limiting |
 
 ## Testing
 
@@ -222,9 +222,9 @@ import { MockRateLimitService } from '@/convex/lib/services/rateLimitService'
 
 test('rate limiting works', async () => {
   const service = new MockRateLimitService()
-  
+
   await service.checkLimit('SEND_MESSAGE', 'user-123')
-  
+
   expect(service.getChecks()).toHaveLength(1)
   expect(service.getChecks()[0]).toEqual({
     operation: 'SEND_MESSAGE',
@@ -260,7 +260,7 @@ Rate limit errors are user-friendly and specific:
 throw new Error('Too many messages. Please wait a minute before sending more.')
 ```
 
-Customize messages in [`rateLimits.ts`](file:///Users/mandulaj/dev/source/convex-tanstack-cloudfare/convex/lib/constants/rateLimits.ts):
+Customize messages in `convex/lib/constants/rateLimits.ts`:
 
 ```typescript
 export const RATE_LIMIT_MESSAGES = {
@@ -277,11 +277,13 @@ export const RATE_LIMIT_MESSAGES = {
 Currently, the template uses a placeholder implementation. To enable full rate limiting:
 
 1. **Install the component**:
+
 ```bash
 npm install @convex-dev/rate-limiter
 ```
 
 2. **Configure in `convex.config.ts`** (when component is available):
+
 ```typescript
 import { defineApp } from 'convex/server'
 import rateLimiter from '@convex-dev/rate-limiter/convex.config'
@@ -292,6 +294,7 @@ export default app
 ```
 
 3. **Uncomment production code** in `rateLimitService.ts`:
+
 ```typescript
 // Remove the placeholder and uncomment the actual implementation
 const { rateLimiter } = useComponents()
@@ -321,9 +324,9 @@ await rateLimiter.limit(this.ctx, operation, { ... })
 
 See practical examples in:
 
-- [`convex/messages.ts`](file:///Users/mandulaj/dev/source/convex-tanstack-cloudfare/convex/messages.ts) - Message rate limiting
-- [`convex/files.ts`](file:///Users/mandulaj/dev/source/convex-tanstack-cloudfare/convex/files.ts) - File upload rate limiting
-- [`docs/ARCHITECTURE.md`](file:///Users/mandulaj/dev/source/convex-tanstack-cloudfare/docs/ARCHITECTURE.md) - Pattern explanations
+- `convex/messages.ts` — Message rate limiting
+- `convex/files.ts` — File upload rate limiting
+- `docs/ARCHITECTURE.md` — Pattern explanations
 
 ## Summary
 

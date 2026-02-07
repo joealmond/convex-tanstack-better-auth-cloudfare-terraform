@@ -1,9 +1,5 @@
-import { type ClassValue, clsx } from 'clsx'
-
-// Utility for conditional class names
-export function cn(...inputs: ClassValue[]) {
-  return clsx(inputs)
-}
+// Re-export cn from dedicated module for convenience
+export { cn } from './cn'
 
 // Format file size for display
 export function formatFileSize(bytes: number): string {
