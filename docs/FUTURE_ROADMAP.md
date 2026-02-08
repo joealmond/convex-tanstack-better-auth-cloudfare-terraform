@@ -55,6 +55,27 @@ Features and improvements planned for future releases. Items are organized by pr
 - [ ] Document schema evolution patterns for Convex
 - [ ] Example migration scripts for adding/removing fields
 
+### SEO & Meta Tags Management
+
+- [ ] Meta tag management hook for TanStack Start SSR
+- [ ] Open Graph and Twitter Card examples
+- [ ] Structured data (JSON-LD) for rich snippets
+- [ ] Dynamic sitemap generation
+
+### Data Tables with TanStack Table
+
+- [ ] TanStack Table integration example (`@tanstack/react-table`)
+- [ ] Sorting, filtering, and column visibility
+- [ ] Server-side pagination with Convex
+- [ ] Keyboard accessibility for tables
+
+### Pagination & Infinite Scroll
+
+- [ ] Cursor-based pagination pattern with Convex
+- [ ] Infinite scroll hook (`use-infinite-scroll.ts`)
+- [ ] Loading states and error boundaries
+- [ ] Document pagination best practices
+
 ---
 
 ## Phase 3: Feature Examples (Medium Priority, Medium Effort)
@@ -95,6 +116,27 @@ Features and improvements planned for future releases. Items are organized by pr
 - [ ] Theme toggle component (system / light / dark)
 - [ ] Persist preference in localStorage
 - [ ] Update globals.css with proper theme switching
+
+### Full-Text Search
+
+- [ ] Convex full-text search integration example
+- [ ] Search UI component with debouncing
+- [ ] Highlighting matched results
+- [ ] Performance optimization tips
+
+### Cloudflare Images Integration
+
+- [ ] Image upload to Cloudflare Images
+- [ ] Responsive image serving with variants
+- [ ] Image optimization and CDN caching
+- [ ] Replace file storage example with R2/Images
+
+### Multiplayer / Real-time Collaboration
+
+- [ ] Real-time cursor tracking pattern
+- [ ] Collaborative editing example (whiteboard/document)
+- [ ] Conflict-free replicated data types (CRDT) exploration
+- [ ] Document sync with Convex subscriptions
 
 ---
 
@@ -147,6 +189,35 @@ Features and improvements planned for future releases. Items are organized by pr
 - [ ] Recharts integration example
 - [ ] Admin-only analytics route
 
+### Accessibility (WCAG Compliance)
+
+- [ ] Audit checklist for WCAG 2.1 AA compliance
+- [ ] ARIA labels and semantic HTML guidelines
+- [ ] Keyboard navigation (focus management, tabindex)
+- [ ] Color contrast and screen reader testing
+- [ ] Add accessibility testing with axe-core
+
+### Web Performance Monitoring
+
+- [ ] Core Web Vitals tracking (CLS, LCP, FID)
+- [ ] Sentry or LogRocket integration for performance
+- [ ] Client-side timing instrumentation
+- [ ] Performance budget & optimization guide
+
+### Database Backup & Export
+
+- [ ] Convex snapshot/export patterns
+- [ ] Scheduled backup strategies
+- [ ] Data migration and recovery documentation
+- [ ] Example backup automation script
+
+### Progressive Web App (PWA)
+
+- [ ] Service worker setup for offline support
+- [ ] Web manifest configuration
+- [ ] Install prompt UX
+- [ ] Offline-first data sync patterns
+
 ---
 
 ## Phase 5: DevOps & Infrastructure (Lower Priority)
@@ -168,6 +239,20 @@ Features and improvements planned for future releases. Items are organized by pr
 - [ ] k6 or Artillery load test scripts
 - [ ] Performance benchmarks documentation
 - [ ] Rate limit tuning guide based on load tests
+
+### Custom Domains & SSL
+
+- [ ] Cloudflare custom domain setup guide
+- [ ] SSL/TLS configuration
+- [ ] DNS records (CNAME, MX) documentation
+- [ ] Production deployment checklist
+
+### Disaster Recovery & Failover
+
+- [ ] Multi-region deployment strategies
+- [ ] Failover routing with Cloudflare
+- [ ] Uptime monitoring automation
+- [ ] Incident response playbook template
 
 ---
 
