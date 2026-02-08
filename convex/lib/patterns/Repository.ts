@@ -1,30 +1,30 @@
 /**
  * Repository Pattern Example
  * ==========================
- * 
+ *
  * Abstract data access logic to make it reusable, testable, and consistent.
- * 
+ *
  * Benefits:
  * - Single source of truth for queries
  * - Easy to test (mock the repository)
  * - Consistent API across your app
  * - Reusable complex queries
- * 
+ *
  * Usage:
  * ```typescript
- * import { UserRepository } from './lib/patterns/Repository'
- * 
- * export const getUser = query({
+ * import { MessageRepository } from './lib/patterns/Repository'
+ *
+ * export const getRecentMessages = query({
  *   handler: async (ctx, args) => {
- *     const repo = new UserRepository(ctx)
- *     return await repo.findByEmail(args.email)
+ *     const repo = new MessageRepository(ctx)
+ *     return await repo.getRecent()
  *   },
  * })
  * ```
  */
 
-import type { QueryCtx, MutationCtx } from '../_generated/server'
-import type { Id, Doc } from '../_generated/dataModel'
+import type { QueryCtx, MutationCtx } from '../../_generated/server'
+import type { Id, Doc, TableNames } from '../../_generated/dataModel'
 
 type Ctx = QueryCtx | MutationCtx
 
@@ -32,7 +32,7 @@ type Ctx = QueryCtx | MutationCtx
  * Generic Repository Base Class
  * Provides common CRUD operations for any table
  */
-export class Repository<TableName extends keyof Doc> {
+export class Repository<TableName extends TableNames> {
   constructor(
     protected ctx: Ctx,
     protected tableName: TableName
@@ -41,14 +41,14 @@ export class Repository<TableName extends keyof Doc> {
   /**
    * Find document by ID
    */
-  async findById(id: Id<TableName>): Promise<Doc[TableName] | null> {
+  async findById(id: Id<TableName>): Promise<Doc<TableName> | null> {
     return await this.ctx.db.get(id)
   }
 
   /**
    * Find all documents
    */
-  async findAll(): Promise<Doc[TableName][]> {
+  async findAll(): Promise<Doc<TableName>[]> {
     return await this.ctx.db.query(this.tableName).collect()
   }
 
@@ -61,7 +61,7 @@ export class Repository<TableName extends keyof Doc> {
       .order('desc')
       .paginate({
         numItems: options.limit ?? 20,
-        cursor: options.cursor,
+        cursor: options.cursor ?? null,
       })
   }
 
@@ -75,64 +75,7 @@ export class Repository<TableName extends keyof Doc> {
 }
 
 /**
- * User-specific repository with domain methods
- */
-export class UserRepository extends Repository<'users'> {
-  constructor(ctx: Ctx) {
-    super(ctx, 'users')
-  }
-
-  /**
-   * Find user by email
-   */
-  async findByEmail(email: string): Promise<Doc['users'] | null> {
-    return await this.ctx.db
-      .query('users')
-      .withIndex('by_email', (q) => q.eq('email', email))
-      .unique()
-  }
-
-  /**
-   * Get all admin users
-   */
-  async getAdmins(): Promise<Doc['users'][]> {
-    return await this.ctx.db
-      .query('users')
-      .filter((q) => q.eq(q.field('role'), 'admin'))
-      .collect()
-  }
-
-  /**
-   * Get recently active users (last 7 days)
-   */
-  async getRecentlyActive(limit: number = 50): Promise<Doc['users'][]> {
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-    
-    return await this.ctx.db
-      .query('users')
-      .filter((q) => q.gte(q.field('lastActiveAt'), sevenDaysAgo))
-      .order('desc')
-      .take(limit)
-  }
-
-  /**
-   * Search users by name
-   */
-  async searchByName(query: string, limit: number = 20): Promise<Doc['users'][]> {
-    return await this.ctx.db
-      .query('users')
-      .filter((q) => 
-        q.or(
-          q.eq(q.field('name'), query),
-          // Add more sophisticated search logic here
-        )
-      )
-      .take(limit)
-  }
-}
-
-/**
- * Message-specific repository
+ * Message-specific repository with domain methods
  */
 export class MessageRepository extends Repository<'messages'> {
   constructor(ctx: Ctx) {
@@ -140,12 +83,23 @@ export class MessageRepository extends Repository<'messages'> {
   }
 
   /**
-   * Get messages by author
+   * Get messages by author ID
    */
-  async findByAuthor(authorId: string, limit: number = 50): Promise<Doc['messages'][]> {
+  async findByAuthorId(authorId: string, limit: number = 50): Promise<Doc<'messages'>[]> {
     return await this.ctx.db
       .query('messages')
-      .withIndex('by_author', (q) => q.eq('authorId', authorId))
+      .filter((q) => q.eq(q.field('authorId'), authorId))
+      .order('desc')
+      .take(limit)
+  }
+
+  /**
+   * Get messages by author name
+   */
+  async findByAuthorName(authorName: string, limit: number = 50): Promise<Doc<'messages'>[]> {
+    return await this.ctx.db
+      .query('messages')
+      .filter((q) => q.eq(q.field('authorName'), authorName))
       .order('desc')
       .take(limit)
   }
@@ -153,25 +107,18 @@ export class MessageRepository extends Repository<'messages'> {
   /**
    * Get recent messages
    */
-  async getRecent(limit: number = 50): Promise<Doc['messages'][]> {
-    return await this.ctx.db
-      .query('messages')
-      .withIndex('by_created')
-      .order('desc')
-      .take(limit)
+  async getRecent(limit: number = 50): Promise<Doc<'messages'>[]> {
+    return await this.ctx.db.query('messages').withIndex('by_created').order('desc').take(limit)
   }
 
   /**
    * Get messages in date range
    */
-  async findInDateRange(startTime: number, endTime: number): Promise<Doc['messages'][]> {
+  async findInDateRange(startTime: number, endTime: number): Promise<Doc<'messages'>[]> {
     return await this.ctx.db
       .query('messages')
-      .filter((q) => 
-        q.and(
-          q.gte(q.field('createdAt'), startTime),
-          q.lte(q.field('createdAt'), endTime)
-        )
+      .filter((q) =>
+        q.or(q.gte(q.field('createdAt'), startTime), q.lte(q.field('createdAt'), endTime))
       )
       .collect()
   }
@@ -188,7 +135,7 @@ export class FileRepository extends Repository<'files'> {
   /**
    * Get files by uploader with download URLs
    */
-  async findByUploader(uploaderId: string): Promise<Array<Doc['files'] & { url: string | null }>> {
+  async findByUploader(uploaderId: string): Promise<Array<Doc<'files'> & { url: string | null }>> {
     const files = await this.ctx.db
       .query('files')
       .withIndex('by_uploader', (q) => q.eq('uploadedBy', uploaderId))
@@ -205,7 +152,7 @@ export class FileRepository extends Repository<'files'> {
   /**
    * Get files by type
    */
-  async findByType(fileType: string): Promise<Doc['files'][]> {
+  async findByType(fileType: string): Promise<Doc<'files'>[]> {
     return await this.ctx.db
       .query('files')
       .filter((q) => q.eq(q.field('type'), fileType))

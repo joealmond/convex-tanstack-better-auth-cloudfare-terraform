@@ -26,11 +26,23 @@
  * Option 2: Use Better Auth's admin plugin (requires additional setup)
  */
 
-import { query, mutation } from './_generated/server'
+import { query, mutation, type QueryCtx } from './_generated/server'
 import { v } from 'convex/values'
 import { authComponent } from './auth'
 import { ADMIN_EMAILS, ROLES } from './lib/config'
 import type { AuthUser } from './lib/authHelpers'
+
+/**
+ * Safely get the authenticated user without throwing.
+ * Returns null if not authenticated or on any auth error (important for SSR).
+ */
+async function getAuthUserSafe(ctx: QueryCtx): Promise<AuthUser | null> {
+  try {
+    return (await authComponent.getAuthUser(ctx)) as AuthUser | null
+  } catch {
+    return null
+  }
+}
 
 /**
  * Get the current authenticated user.
@@ -40,7 +52,7 @@ import type { AuthUser } from './lib/authHelpers'
 export const current = query({
   args: {},
   handler: async (ctx) => {
-    return await authComponent.getAuthUser(ctx)
+    return await getAuthUserSafe(ctx)
   },
 })
 
@@ -56,15 +68,11 @@ export const current = query({
 export const isAdmin = query({
   args: {},
   handler: async (ctx) => {
-    const user = (await authComponent.getAuthUser(ctx)) as AuthUser | null
-    if (!user) {
-      return false
-    }
+    const user = await getAuthUserSafe(ctx)
+    if (!user) return false
 
     // Check email whitelist first (for easy setup)
-    if (user.email && ADMIN_EMAILS.includes(user.email)) {
-      return true
-    }
+    if (user.email && ADMIN_EMAILS.includes(user.email)) return true
 
     // Fallback: check role field in database
     return user.role === ROLES.ADMIN

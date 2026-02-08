@@ -1,19 +1,28 @@
-import { QueryClient } from '@tanstack/react-query'
-import { createRootRouteWithContext } from '@tanstack/react-router'
+import { createRootRouteWithContext, useRouteContext } from '@tanstack/react-router'
 import { Outlet, HeadContent, Scripts } from '@tanstack/react-router'
+import { createServerFn } from '@tanstack/react-start'
+import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react'
 import { Toaster } from 'sonner'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ImpersonateProvider } from '@/hooks/use-impersonate'
 import { AdminToolbar } from '@/components/AdminToolbar'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { authClient } from '@/lib/auth-client'
+import { getToken } from '@/lib/auth-server'
+import type { QueryClient } from '@tanstack/react-query'
+import type { ConvexQueryClient } from '@convex-dev/react-query'
 
 import '../styles/globals.css'
 
-// Root route context type
-interface RouterContext {
-  queryClient: QueryClient
-}
+// Get auth information for SSR using available cookies
+const getAuth = createServerFn({ method: 'GET' }).handler(async () => {
+  return await getToken()
+})
 
-export const Route = createRootRouteWithContext<RouterContext>()({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient
+  convexQueryClient: ConvexQueryClient
+}>()({
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
@@ -23,25 +32,48 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     ],
     links: [{ rel: 'icon', href: '/favicon.ico' }],
   }),
+  beforeLoad: async (ctx) => {
+    const token = await getAuth()
+
+    // All queries, mutations and actions through TanStack Query will be
+    // authenticated during SSR if we have a valid token
+    if (token) {
+      ctx.context.convexQueryClient.serverHttpClient?.setAuth(token)
+    }
+
+    return {
+      isAuthenticated: !!token,
+      token,
+    }
+  },
   component: RootComponent,
 })
 
 function RootComponent() {
+  const context = useRouteContext({ from: Route.id })
+
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <HeadContent />
-      </head>
-      <body className="min-h-screen bg-background antialiased">
-        <ImpersonateProvider>
-          <ErrorBoundary>
-            <Outlet />
-          </ErrorBoundary>
-          <AdminToolbar />
-          <Toaster />
-        </ImpersonateProvider>
-        <Scripts />
-      </body>
-    </html>
+    <ConvexBetterAuthProvider
+      client={context.convexQueryClient.convexClient}
+      authClient={authClient}
+      initialToken={context.token}
+    >
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <HeadContent />
+        </head>
+        <body className="min-h-screen bg-background antialiased">
+          <ImpersonateProvider>
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
+            <ThemeToggle />
+            <AdminToolbar />
+            <Toaster />
+          </ImpersonateProvider>
+          <Scripts />
+        </body>
+      </html>
+    </ConvexBetterAuthProvider>
   )
 }

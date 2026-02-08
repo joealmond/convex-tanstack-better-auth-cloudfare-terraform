@@ -1,23 +1,25 @@
 import { createRouter } from '@tanstack/react-router'
-import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query'
+import { QueryClient, MutationCache } from '@tanstack/react-query'
+import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
 import { ConvexQueryClient } from '@convex-dev/react-query'
-import { ConvexProvider, ConvexReactClient } from 'convex/react'
 import { routeTree } from './routeTree.gen'
-import { env } from './lib/env'
 import { NotFound } from './components/NotFound'
 
 export function getRouter() {
-  const convexClient = new ConvexReactClient(env.VITE_CONVEX_URL)
-  const convexQueryClient = new ConvexQueryClient(convexClient)
+  const convexUrl = (import.meta as any).env.VITE_CONVEX_URL!
+  if (!convexUrl) {
+    throw new Error('VITE_CONVEX_URL is not set')
+  }
+
+  const convexQueryClient = new ConvexQueryClient(convexUrl, {
+    expectAuth: true,
+  })
 
   const queryClient: QueryClient = new QueryClient({
     defaultOptions: {
       queries: {
         queryKeyHashFn: convexQueryClient.hashFn(),
         queryFn: convexQueryClient.queryFn(),
-        // Cache settings
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        gcTime: 1000 * 60 * 10, // 10 minutes
       },
     },
     mutationCache: new MutationCache({
@@ -31,16 +33,14 @@ export function getRouter() {
   const router = createRouter({
     routeTree,
     defaultPreload: 'intent',
-    context: { queryClient },
+    context: { queryClient, convexQueryClient },
     scrollRestoration: true,
     defaultNotFoundComponent: NotFound,
-    Wrap: ({ children }) => (
-      <ConvexProvider client={convexClient}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
-      </ConvexProvider>
-    ),
+  })
+
+  setupRouterSsrQueryIntegration({
+    router,
+    queryClient,
   })
 
   return router
@@ -51,4 +51,3 @@ declare module '@tanstack/react-router' {
     router: ReturnType<typeof getRouter>
   }
 }
-

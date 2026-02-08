@@ -1,25 +1,25 @@
 /**
  * Form Factory Pattern
  * =====================
- * 
+ *
  * Generate type-safe forms from Zod schemas with consistent styling and validation.
- * 
+ *
  * Benefits:
  * - Less boilerplate
  * - Consistent validation
  * - Type-safe forms
  * - Reusable field components
- * 
+ *
  * Usage:
  * ```typescript
  * import { createForm } from '@/lib/patterns/FormFactory'
  * import { z } from 'zod'
- * 
+ *
  * const schema = z.object({
  *   email: z.string().email(),
  *   password: z.string().min(8),
  * })
- * 
+ *
  * const LoginForm = createForm(schema, {
  *   onSubmit: async (data) => {
  *     await api.auth.login(data)
@@ -28,9 +28,9 @@
  * ```
  */
 
-import { useForm, type UseFormReturn } from 'react-hook-form'
+import { useForm, type UseFormReturn, type Resolver, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import type { z } from 'zod'
+import { z } from 'zod'
 import { cn } from '@/lib/cn'
 import { Loader2 } from 'lucide-react'
 
@@ -48,11 +48,11 @@ export interface FieldConfig {
 /**
  * Form configuration
  */
-export interface FormConfig<T extends z.ZodType> {
+export interface FormConfig<T extends z.ZodObject<z.ZodRawShape>> {
   schema: T
-  onSubmit: (data: z.infer<T>) => Promise<void> | void
-  defaultValues?: Partial<z.infer<T>>
-  fields?: Partial<Record<keyof z.infer<T>, FieldConfig>>
+  onSubmit: (data: z.output<T>) => Promise<void> | void
+  defaultValues?: Partial<z.output<T>>
+  fields?: Partial<Record<keyof z.output<T>, FieldConfig>>
   submitLabel?: string
   className?: string
 }
@@ -60,24 +60,24 @@ export interface FormConfig<T extends z.ZodType> {
 /**
  * Create a form component from a Zod schema
  */
-export function createForm<T extends z.ZodType>(config: FormConfig<T>) {
+export function createForm<T extends z.ZodObject<z.ZodRawShape>>(config: FormConfig<T>) {
   return function Form() {
     const {
       register,
       handleSubmit,
       formState: { errors, isSubmitting },
       reset,
-    } = useForm<z.infer<T>>({
-      resolver: zodResolver(config.schema),
+    } = useForm<z.output<T>>({
+      resolver: zodResolver(config.schema) as Resolver<z.output<T>>,
       defaultValues: config.defaultValues as any,
     })
 
-    const onSubmit = async (data: z.infer<T>) => {
+    const onSubmit: SubmitHandler<z.output<T>> = async (data) => {
       await config.onSubmit(data)
       reset()
     }
 
-    const fields = Object.keys(config.schema.shape) as Array<keyof z.infer<T>>
+    const fields = Object.keys(config.schema.shape) as Array<keyof z.output<T>>
 
     return (
       <form onSubmit={handleSubmit(onSubmit)} className={cn('space-y-4', config.className)}>
@@ -133,7 +133,9 @@ export function createForm<T extends z.ZodType>(config: FormConfig<T>) {
                 <p className="text-xs text-muted-foreground">{fieldConfig.description}</p>
               )}
 
-              {fieldError && <p className="text-sm text-destructive">{fieldError.message as string}</p>}
+              {fieldError && (
+                <p className="text-sm text-destructive">{fieldError.message as string}</p>
+              )}
             </div>
           )
         })}
@@ -254,7 +256,6 @@ export function TextAreaField({
 /**
  * Example Usage
  */
-import { z } from 'zod'
 
 // Define schema
 const loginSchema = z.object({

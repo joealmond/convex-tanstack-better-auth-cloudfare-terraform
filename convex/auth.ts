@@ -22,10 +22,12 @@ function getEnvConfig() {
   const googleClientId = process.env.GOOGLE_CLIENT_ID
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
 
-  const missing = REQUIRED_ENV_VARS.filter(name => !process.env[name])
+  const missing = REQUIRED_ENV_VARS.filter((name) => !process.env[name])
 
   if (missing.length > 0) {
-    console.warn(`⚠️  MISSING CONVEX ENV VARS: ${missing.join(', ')}. Set with: npx convex env set <VAR> "value" or use Convex Dashboard → Settings → Environment Variables`)
+    console.warn(
+      `⚠️  MISSING CONVEX ENV VARS: ${missing.join(', ')}. Set with: npx convex env set <VAR> "value" or use Convex Dashboard → Settings → Environment Variables`
+    )
   }
 
   return {
@@ -47,12 +49,6 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
   return betterAuth({
     baseURL: envConfig.siteUrl,
     database: authComponent.adapter(ctx),
-    // Trusted origins for CORS
-    trustedOrigins: [
-      'http://localhost:3000',
-      'http://localhost:8787',
-      envConfig.siteUrl,
-    ],
     // Google OAuth
     socialProviders: {
       google: {
@@ -60,9 +56,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
         clientSecret: envConfig.googleClientSecret,
       },
     },
-    plugins: [
-      convex({ authConfig }),
-    ],
+    plugins: [convex({ authConfig })],
   })
 }
 

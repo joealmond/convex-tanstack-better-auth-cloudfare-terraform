@@ -1,27 +1,27 @@
 /**
  * Enhanced Convex Mutation Hook
  * ==============================
- * 
+ *
  * Wraps Convex mutations with toast notifications, loading states, and error handling.
- * 
+ *
  * Benefits:
  * - Consistent UX across all mutations
  * - Centralized error handling
  * - Automatic toast notifications
  * - Loading state management
- * 
+ *
  * Usage:
  * ```typescript
  * import { useConvexMutation } from '@/lib/patterns/useConvexMutation'
  * import { api } from '@/convex/_generated/api'
- * 
+ *
  * function MyComponent() {
  *   const sendMessage = useConvexMutation(api.messages.send)
- * 
+ *
  *   const handleSubmit = async (content: string) => {
  *     await sendMessage.execute({ content })
  *   }
- * 
+ *
  *   return <button disabled={sendMessage.isLoading}>Send</button>
  * }
  * ```
@@ -144,12 +144,8 @@ export function useOptimisticMutation<Mutation extends FunctionReference<'mutati
     const optimisticResult = options.onOptimisticUpdate(args)
     setOptimisticData(optimisticResult)
 
-    try {
-      return await execute(args)
-    } catch (error) {
-      // Error handling is done in useConvexMutation
-      throw error
-    }
+    // Error handling is done in useConvexMutation
+    return await execute(args)
   }
 
   return {
@@ -173,7 +169,7 @@ export function useDebouncedMutation<Mutation extends FunctionReference<'mutatio
   options: UseMutationOptions = {}
 ) {
   const { execute, isLoading, isError, error } = useConvexMutation(mutation, options)
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const debouncedExecute = useCallback(
     (args: FunctionArgs<Mutation>) => {

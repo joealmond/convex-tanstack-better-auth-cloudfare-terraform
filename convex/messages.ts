@@ -17,7 +17,7 @@ export const send = mutation({
     content: v.string(),
   },
   handler: withRateLimit(
-    async (ctx, args, user) => {
+    async (ctx, args: { content: string }, user) => {
       return await ctx.db.insert('messages', {
         content: args.content,
         authorId: user._id,

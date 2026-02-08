@@ -1,18 +1,18 @@
 /**
  * Factory Pattern Examples
  * =========================
- * 
+ *
  * Create objects with consistent configuration and validation.
- * 
+ *
  * Benefits:
  * - Consistent object creation
  * - DRY (Don't Repeat Yourself)
  * - Easy to extend with new query types
- * 
+ *
  * Usage:
  * ```typescript
  * import { QueryFactory } from './lib/patterns/Factory'
- * 
+ *
  * export const listMessages = query({
  *   handler: async (ctx, args) => {
  *     const factory = new QueryFactory(ctx, 'messages')
@@ -22,8 +22,8 @@
  * ```
  */
 
-import type { QueryCtx } from '../_generated/server'
-import type { TableNames, Doc } from '../_generated/dataModel'
+import type { QueryCtx, MutationCtx } from '../../_generated/server'
+import type { TableNames, Doc } from '../../_generated/dataModel'
 
 /**
  * Query Factory
@@ -44,21 +44,17 @@ export class QueryFactory<T extends TableNames> {
     orderBy?: 'asc' | 'desc'
     filter?: (q: any) => any
   }): Promise<{
-    page: Doc[T][]
+    page: Doc<T>[]
     continueCursor: string | null
     isDone: boolean
   }> {
-    let query = this.ctx.db.query(this.table)
+    const baseQuery = this.ctx.db.query(this.table)
+    const orderedQuery = baseQuery.order(options.orderBy ?? 'desc')
+    const filteredQuery = options.filter ? orderedQuery.filter(options.filter) : orderedQuery
 
-    if (options.filter) {
-      query = query.filter(options.filter)
-    }
-
-    query = query.order(options.orderBy ?? 'desc')
-
-    const result = await query.paginate({
+    const result = await filteredQuery.paginate({
       numItems: options.limit ?? 20,
-      cursor: options.cursor,
+      cursor: options.cursor ?? null,
     })
 
     return {
@@ -71,7 +67,7 @@ export class QueryFactory<T extends TableNames> {
   /**
    * Get recent items (last N days)
    */
-  async recent(days: number = 7, limit: number = 50): Promise<Doc[T][]> {
+  async recent(days: number = 7, limit: number = 50): Promise<Doc<T>[]> {
     const cutoffTime = Date.now() - days * 24 * 60 * 60 * 1000
 
     return await this.ctx.db
@@ -84,14 +80,11 @@ export class QueryFactory<T extends TableNames> {
   /**
    * Get items in date range
    */
-  async dateRange(startTime: number, endTime: number): Promise<Doc[T][]> {
+  async dateRange(startTime: number, endTime: number): Promise<Doc<T>[]> {
     return await this.ctx.db
       .query(this.table)
       .filter((q) =>
-        q.and(
-          q.gte(q.field('createdAt'), startTime),
-          q.lte(q.field('createdAt'), endTime)
-        )
+        q.and(q.gte(q.field('createdAt'), startTime), q.lte(q.field('createdAt'), endTime))
       )
       .collect()
   }
@@ -99,11 +92,7 @@ export class QueryFactory<T extends TableNames> {
   /**
    * Search by field value
    */
-  async searchByField(
-    field: string,
-    value: any,
-    limit: number = 20
-  ): Promise<Doc[T][]> {
+  async searchByField(field: string, value: any, limit: number = 20): Promise<Doc<T>[]> {
     return await this.ctx.db
       .query(this.table)
       .filter((q) => q.eq(q.field(field as any), value))
@@ -113,7 +102,7 @@ export class QueryFactory<T extends TableNames> {
   /**
    * Get all with filter
    */
-  async getAllWhere(filter: (q: any) => any): Promise<Doc[T][]> {
+  async getAllWhere(filter: (q: any) => any): Promise<Doc<T>[]> {
     return await this.ctx.db.query(this.table).filter(filter).collect()
   }
 }
@@ -123,6 +112,7 @@ export class QueryFactory<T extends TableNames> {
  * Create consistent validation schemas for common patterns
  */
 import { v } from 'convex/values'
+import type { ObjectType, PropertyValidators } from 'convex/values'
 
 export class ValidationSchemaFactory {
   /** Email validation */
@@ -132,6 +122,7 @@ export class ValidationSchemaFactory {
 
   /** Required string with min length */
   static requiredString(minLength: number = 1) {
+    void minLength
     return v.string()
   }
 
@@ -141,7 +132,7 @@ export class ValidationSchemaFactory {
   }
 
   /** Optional field wrapper */
-  static optional<T>(schema: T) {
+  static optional(schema: Parameters<typeof v.optional>[0]) {
     return v.optional(schema)
   }
 
@@ -213,11 +204,7 @@ export class ResponseFactory {
   }
 
   /** Paginated response */
-  static paginated<T>(
-    items: T[],
-    cursor: string | null,
-    totalCount?: number
-  ) {
+  static paginated<T>(items: T[], cursor: string | null, totalCount?: number) {
     return {
       items,
       cursor,
@@ -240,20 +227,23 @@ export class ResponseFactory {
  * Mutation Builder Factory
  * Create mutations with common patterns
  */
-import { mutation } from '../_generated/server'
+import { mutation } from '../../_generated/server'
+import { requireAuth, requireAdmin, type AuthUser } from '../authHelpers'
 
 export class MutationFactory {
   /**
    * Create a mutation with automatic auth check
    */
-  static authenticated<Args, Output>(handler: (ctx: any, args: Args, userId: string) => Promise<Output>) {
+  static authenticated<Args extends PropertyValidators, Output>(
+    args: Args,
+    handler: (ctx: MutationCtx, args: ObjectType<Args>, user: AuthUser) => Promise<Output>
+  ) {
     return mutation({
-      handler: async (ctx, args: Args) => {
-        const identity = await ctx.auth.getUserIdentity()
-        if (!identity) {
-          throw new Error('Authentication required')
-        }
-        return await handler(ctx, args, identity.subject)
+      args,
+      handler: async (ctx, ...argsArray: [ObjectType<Args>]) => {
+        const user = await requireAuth(ctx)
+        const [args] = argsArray
+        return await handler(ctx, args, user)
       },
     })
   }
@@ -261,25 +251,16 @@ export class MutationFactory {
   /**
    * Create a mutation with admin check
    */
-  static adminOnly<Args, Output>(handler: (ctx: any, args: Args, userId: string) => Promise<Output>) {
+  static adminOnly<Args extends PropertyValidators, Output>(
+    args: Args,
+    handler: (ctx: MutationCtx, args: ObjectType<Args>, user: AuthUser) => Promise<Output>
+  ) {
     return mutation({
-      handler: async (ctx, args: Args) => {
-        const identity = await ctx.auth.getUserIdentity()
-        if (!identity) {
-          throw new Error('Authentication required')
-        }
-        
-        // Check if user is admin (customize based on your RBAC)
-        const user = await ctx.db
-          .query('users')
-          .filter((q) => q.eq(q.field('id'), identity.subject))
-          .first()
-
-        if (!user || user.role !== 'admin') {
-          throw new Error('Admin access required')
-        }
-
-        return await handler(ctx, args, identity.subject)
+      args,
+      handler: async (ctx, ...argsArray: [ObjectType<Args>]) => {
+        const user = await requireAdmin(ctx)
+        const [args] = argsArray
+        return await handler(ctx, args, user)
       },
     })
   }
@@ -302,7 +283,7 @@ export const examplePaginatedQuery = {
 }
 
 // Validation with factory
-import { mutation as convexMutation } from '../_generated/server'
+import { mutation as convexMutation } from '../../_generated/server'
 
 export const exampleCreateMessage = convexMutation({
   args: ValidationSchemaFactory.messageCreation(),

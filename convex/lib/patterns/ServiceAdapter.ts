@@ -1,19 +1,19 @@
 /**
  * Service Adapter Pattern Example
  * ================================
- * 
+ *
  * Wrap external services to abstract implementation details and enable swapping.
- * 
+ *
  * Benefits:
  * - Easy to swap implementations (Resend → SendGrid)
  * - Testable (use mock in tests)
  * - Rate limiting in one place
  * - Consistent error handling
- * 
+ *
  * Usage:
  * ```typescript
  * import { EmailService } from './lib/patterns/ServiceAdapter'
- * 
+ *
  * export const registerUser = mutation({
  *   handler: async (ctx, args) => {
  *     const emailService = new EmailService(ctx)
@@ -23,7 +23,7 @@
  * ```
  */
 
-import type { MutationCtx } from '../_generated/server'
+import type { MutationCtx } from '../../_generated/server'
 
 /**
  * Email Service Interface
@@ -37,21 +37,24 @@ export interface IEmailService {
 
 /**
  * Production Email Service (using Resend or similar)
- * 
+ *
  * To use with @convex-dev/resend:
  * 1. npm install @convex-dev/resend
  * 2. Configure in convex.config.ts
  * 3. Pass resend component to constructor
  */
 export class EmailService implements IEmailService {
-  constructor(private ctx: MutationCtx) {}
+  constructor(private ctx: MutationCtx) {
+    void this.ctx
+  }
 
   async sendWelcome(to: string, name: string) {
+    void this.renderWelcomeTemplate(name)
     // In production, use @convex-dev/resend component:
     // await this.resend.send(ctx, { ... })
-    
+
     console.log(`[EMAIL] Welcome email to ${to} (${name})`)
-    
+
     // Example with manual implementation:
     // await this.send({
     //   to,
@@ -62,8 +65,9 @@ export class EmailService implements IEmailService {
 
   async sendPasswordReset(to: string, token: string) {
     const resetUrl = `${process.env.SITE_URL}/reset-password?token=${token}`
-    console.log(`[EMAIL] Password reset to ${to}`)
-    
+    void this.renderResetTemplate(resetUrl)
+    console.log(`[EMAIL] Password reset to ${to} (${resetUrl})`)
+
     // await this.send({
     //   to,
     //   subject: 'Reset your password',
@@ -72,8 +76,8 @@ export class EmailService implements IEmailService {
   }
 
   async sendNotification(to: string, subject: string, message: string) {
-    console.log(`[EMAIL] Notification to ${to}: ${subject}`)
-    
+    console.log(`[EMAIL] Notification to ${to}: ${subject} - ${message}`)
+
     // await this.send({
     //   to,
     //   subject,
@@ -156,14 +160,16 @@ export interface IPaymentService {
 
 /**
  * Stripe Payment Service Adapter
- * 
+ *
  * To use with @convex-dev/stripe:
  * 1. npm install @convex-dev/stripe
  * 2. Configure in convex.config.ts
  * 3. Pass stripe component to constructor
  */
 export class StripePaymentService implements IPaymentService {
-  constructor(private ctx: MutationCtx) {}
+  constructor(private ctx: MutationCtx) {
+    void this.ctx
+  }
 
   async createCheckoutSession(userId: string, priceId: string) {
     // In production with @convex-dev/stripe:
@@ -173,7 +179,7 @@ export class StripePaymentService implements IPaymentService {
     //   successUrl: `${process.env.SITE_URL}/success`,
     //   cancelUrl: `${process.env.SITE_URL}/cancel`,
     // })
-    
+
     console.log(`[PAYMENT] Create checkout for user ${userId}, price ${priceId}`)
     return { url: '/checkout-placeholder' }
   }
@@ -181,19 +187,20 @@ export class StripePaymentService implements IPaymentService {
   async createCustomerPortal(userId: string) {
     // In production:
     // const url = await stripe.portal(ctx, { userId })
-    
+
     console.log(`[PAYMENT] Create portal for user ${userId}`)
     return { url: '/portal-placeholder' }
   }
 
   async hasActiveSubscription(userId: string): Promise<boolean> {
+    void userId
     // In production:
     // const subscription = await ctx.db
     //   .query('subscriptions')
     //   .filter((q) => q.eq(q.field('userId'), userId))
     //   .first()
     // return subscription?.status === 'active'
-    
+
     return false
   }
 }
@@ -232,7 +239,9 @@ export class MockPaymentService implements IPaymentService {
  * Create service instances based on environment
  */
 export class ServiceFactory {
-  constructor(private ctx: MutationCtx) {}
+  constructor(private ctx: MutationCtx) {
+    void this.ctx
+  }
 
   /** Get appropriate email service based on environment */
   getEmailService(): IEmailService {

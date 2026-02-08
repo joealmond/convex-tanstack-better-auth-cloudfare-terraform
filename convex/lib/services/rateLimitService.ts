@@ -1,34 +1,34 @@
 /**
  * Rate Limit Service
  * ===================
- * 
+ *
  * Service Adapter for rate limiting using @convex-dev/rate-limiter.
- * 
+ *
  * Benefits:
  * - Centralized rate limiting logic
  * - Easy to test with mock
  * - Configurable limits per operation
  * - Role-aware rate limiting
- * 
+ *
  * Usage:
  * ```typescript
  * import { RateLimitService } from './lib/services/rateLimitService'
- * 
+ *
  * export const sendMessage = mutation({
  *   handler: async (ctx, args) => {
  *     const userId = await requireAuth(ctx)
- *     
+ *
  *     const rateLimitService = new RateLimitService(ctx)
  *     await rateLimitService.checkLimit('SEND_MESSAGE', userId)
- *     
+ *
  *     // Continue with mutation logic
  *   }
  * })
  * ```
  */
 
-import type { MutationCtx } from '../_generated/server'
-import { RATE_LIMITS, RATE_LIMIT_MESSAGES, getRateLimitConfig, ROLE_MULTIPLIERS } from '../constants/rateLimits'
+import type { MutationCtx } from '../../_generated/server'
+import { RATE_LIMITS, getRateLimitConfig, ROLE_MULTIPLIERS } from '../constants/rateLimits'
 
 /**
  * Rate Limit Service Interface
@@ -39,7 +39,7 @@ export interface IRateLimitService {
     key: string,
     role?: keyof typeof ROLE_MULTIPLIERS
   ): Promise<void>
-  
+
   reset(operation: keyof typeof RATE_LIMITS, key: string): Promise<void>
 }
 
@@ -56,10 +56,11 @@ export class RateLimitService implements IRateLimitService {
     role: keyof typeof ROLE_MULTIPLIERS = 'user'
   ): Promise<void> {
     const config = getRateLimitConfig(operation, role)
-    
+    void this.ctx
+
     // TODO: Uncomment when @convex-dev/rate-limiter is properly configured
     // For now, we'll use a simple in-memory check
-    
+
     /*
     const { rateLimiter } = useComponents()
     
@@ -74,21 +75,24 @@ export class RateLimitService implements IRateLimitService {
       throw new Error(RATE_LIMIT_MESSAGES[operation])
     }
     */
-    
+
     // Simplified version without component (for now)
-    console.log(`[RATE LIMIT] ${operation} for key ${key} (role: ${role})`)
-    
+    console.log(
+      `[RATE LIMIT] ${operation} for key ${key} (role: ${role}, max: ${config.maxTokens}/${config.period}ms)`
+    )
+
     // TODO: Implement actual rate limiting once component is configured
     // For now, this is a placeholder that logs the attempt
   }
 
   async reset(operation: keyof typeof RATE_LIMITS, key: string): Promise<void> {
+    void this.ctx
     // TODO: Uncomment when @convex-dev/rate-limiter is properly configured
     /*
     const { rateLimiter } = useComponents()
     await rateLimiter.reset(this.ctx, operation, { key })
     */
-    
+
     console.log(`[RATE LIMIT] Reset ${operation} for key ${key}`)
   }
 }

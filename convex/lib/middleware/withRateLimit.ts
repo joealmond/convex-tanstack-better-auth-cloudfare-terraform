@@ -1,14 +1,14 @@
 /**
  * Rate Limiting Middleware
  * =========================
- * 
+ *
  * Middleware decorators for applying rate limits to mutations.
  * Uses the Decorator Pattern to add rate limiting behavior.
- * 
+ *
  * Usage:
  * ```typescript
  * import { withRateLimit, withStandardRateLimit } from './lib/middleware/withRateLimit'
- * 
+ *
  * // Custom rate limit
  * export const sendMessage = mutation({
  *   args: { content: v.string() },
@@ -19,7 +19,7 @@
  *     'SEND_MESSAGE'
  *   ),
  * })
- * 
+ *
  * // Pre-configured standard limit
  * export const apiCall = mutation({
  *   handler: withStandardRateLimit(async (ctx, args, userId) => {
@@ -29,7 +29,7 @@
  * ```
  */
 
-import type { MutationCtx } from '../_generated/server'
+import type { MutationCtx } from '../../_generated/server'
 import { RateLimitService } from '../services/rateLimitService'
 import { RATE_LIMITS, ROLE_MULTIPLIERS } from '../constants/rateLimits'
 import { requireAuth, isAdmin, type AuthUser } from '../authHelpers'
@@ -119,6 +119,7 @@ export function compose<Args, Output>(
     return decorators.reduceRight((acc, decorator) => {
       // We need to convert back to the base handler type for composition
       return decorator(async (ctx, args, user) => {
+        void user
         // Call the accumulated handler
         return await (acc as any)(ctx, args)
       })

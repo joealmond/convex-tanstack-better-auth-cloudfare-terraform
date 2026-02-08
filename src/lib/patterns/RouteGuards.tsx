@@ -1,19 +1,19 @@
 /**
  * Route Guards Pattern
  * =====================
- * 
+ *
  * Declarative authentication and authorization guards for routes.
- * 
+ *
  * Benefits:
  * - Declarative auth checks
  * - Reusable across routes
  * - Consistent redirect behavior
  * - Easy to test
- * 
+ *
  * Usage:
  * ```typescript
  * import { RequireAuth, RequireAdmin } from '@/lib/patterns/RouteGuards'
- * 
+ *
  * export const Route = createFileRoute('/dashboard')({
  *   component: () => (
  *     <RequireAuth>
@@ -24,9 +24,12 @@
  * ```
  */
 
-import { Navigate, useRouter } from '@tanstack/react-router'
+import { Navigate } from '@tanstack/react-router'
 import { useSession } from '@/lib/auth-client'
-import type { ReactNode } from 'react'
+import { useAdmin } from '@/hooks/use-admin'
+import type { ReactElement, ReactNode } from 'react'
+
+type RedirectTarget = '/' | '/files' | '/dashboard' | '.' | '..'
 
 /**
  * Require Authentication Guard
@@ -34,24 +37,23 @@ import type { ReactNode } from 'react'
  */
 export function RequireAuth({
   children,
-  redirectTo = '/login',
+  redirectTo = '/',
   fallback,
 }: {
   children: ReactNode
-  redirectTo?: string
+  redirectTo?: RedirectTarget
   fallback?: ReactNode
 }) {
   const { data: session, isPending } = useSession()
-  const router = useRouter()
 
   if (isPending) {
-    return fallback ?? <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    return (
+      fallback ?? <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    )
   }
 
   if (!session?.user) {
-    // Store intended destination for redirect after login
-    const currentPath = router.state.location.pathname
-    return <Navigate to={redirectTo} search={{ redirect: currentPath }} />
+    return <Navigate to={redirectTo} />
   }
 
   return <>{children}</>
@@ -67,21 +69,22 @@ export function RequireAdmin({
   fallback,
 }: {
   children: ReactNode
-  redirectTo?: string
+  redirectTo?: RedirectTarget
   fallback?: ReactNode
 }) {
   const { data: session, isPending } = useSession()
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin()
 
-  if (isPending) {
-    return fallback ?? <div className="flex items-center justify-center min-h-screen">Loading...</div>
+  if (isPending || isAdminLoading) {
+    return (
+      fallback ?? <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    )
   }
 
   if (!session?.user) {
-    return <Navigate to="/login" />
+    return <Navigate to={redirectTo} />
   }
 
-  // Check if user has admin role
-  const isAdmin = session.user.role === 'admin'
   if (!isAdmin) {
     return <Navigate to={redirectTo} />
   }
@@ -101,21 +104,25 @@ export function RequireRole({
 }: {
   children: ReactNode
   role: string | string[]
-  redirectTo?: string
+  redirectTo?: RedirectTarget
   fallback?: ReactNode
 }) {
   const { data: session, isPending } = useSession()
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin()
 
-  if (isPending) {
-    return fallback ?? <div className="flex items-center justify-center min-h-screen">Loading...</div>
+  if (isPending || isAdminLoading) {
+    return (
+      fallback ?? <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    )
   }
 
   if (!session?.user) {
-    return <Navigate to="/login" />
+    return <Navigate to={redirectTo} />
   }
 
   const allowedRoles = Array.isArray(role) ? role : [role]
-  const hasRole = session.user.role && allowedRoles.includes(session.user.role)
+  const hasRole =
+    (allowedRoles.includes('admin') && isAdmin) || (allowedRoles.includes('user') && !!session.user)
 
   if (!hasRole) {
     return <Navigate to={redirectTo} />
@@ -133,7 +140,7 @@ export function RequireGuest({
   redirectTo = '/',
 }: {
   children: ReactNode
-  redirectTo?: string
+  redirectTo?: RedirectTarget
 }) {
   const { data: session, isPending } = useSession()
 
@@ -152,8 +159,6 @@ export function RequireGuest({
  * Feature Flag Guard
  * Show content only if feature flag is enabled
  */
-import { useQuery } from 'convex/react'
-
 export function RequireFeature({
   children,
   feature,
@@ -183,22 +188,24 @@ export function RequireFeature({
  */
 export function RequireSubscription({
   children,
-  redirectTo = '/pricing',
+  redirectTo = '/',
   fallback,
 }: {
   children: ReactNode
-  redirectTo?: string
+  redirectTo?: RedirectTarget
   fallback?: ReactNode
 }) {
   const { data: session, isPending } = useSession()
   // const subscription = useQuery(api.subscriptions.getMySubscription)
 
   if (isPending) {
-    return fallback ?? <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    return (
+      fallback ?? <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    )
   }
 
   if (!session?.user) {
-    return <Navigate to="/login" />
+    return <Navigate to={redirectTo} />
   }
 
   // Check subscription status
@@ -221,29 +228,29 @@ export function ComposeGuards({
   guards,
 }: {
   children: ReactNode
-  guards: Array<(props: { children: ReactNode }) => JSX.Element>
+  guards: Array<(props: { children: ReactNode }) => ReactElement>
 }) {
   return guards.reduceRight((acc, Guard) => <Guard>{acc}</Guard>, <>{children}</>)
 }
 
 /**
  * Example Usage:
- * 
+ *
  * // Simple auth guard
  * <RequireAuth>
  *   <ProtectedPage />
  * </RequireAuth>
- * 
+ *
  * // Admin only
  * <RequireAdmin>
  *   <AdminPanel />
  * </RequireAdmin>
- * 
+ *
  * // Multiple guards
  * <ComposeGuards guards={[RequireAuth, RequireAdmin, RequireSubscription]}>
  *   <PremiumAdminFeature />
  * </ComposeGuards>
- * 
+ *
  * // Feature flag
  * <RequireFeature feature="NEW_DASHBOARD" fallback={<OldDashboard />}>
  *   <NewDashboard />
