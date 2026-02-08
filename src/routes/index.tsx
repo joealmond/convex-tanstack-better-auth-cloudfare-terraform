@@ -6,7 +6,7 @@ import { useSession, signIn, signOut } from '@/lib/auth-client'
 import { useAdmin } from '@/hooks/use-admin'
 import { formatRelativeTime } from '@/lib/utils'
 import { MessageSquare, Send, LogIn, LogOut, User, Loader2, Trash2, Shield } from 'lucide-react'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import type { Id } from '@convex/_generated/dataModel'
 
 export const Route = createFileRoute('/')({
@@ -14,6 +14,14 @@ export const Route = createFileRoute('/')({
 })
 
 function HomePage() {
+  return (
+    <Suspense fallback={<HomePageSkeleton />}>
+      <HomePageContent />
+    </Suspense>
+  )
+}
+
+function HomePageContent() {
   const { data: session, isPending: isSessionLoading } = useSession()
   const { data: messages, isLoading: isMessagesLoading } = useQuery(
     convexQuery(api.messages.list, {})
@@ -244,6 +252,67 @@ function HomePage() {
             Cloudflare Workers
           </a>
         </p>
+      </footer>
+    </div>
+  )
+}
+
+function HomePageSkeleton() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Header Skeleton */}
+      <header className="border-b border-border bg-card">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-muted animate-pulse" />
+            <div className="h-6 w-48 rounded-md bg-muted animate-pulse" />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="h-5 w-16 rounded-md bg-muted animate-pulse" />
+            <div className="h-10 w-40 rounded-md bg-muted animate-pulse" />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Skeleton */}
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-2xl">
+        <div className="bg-card rounded-lg border border-border shadow-sm">
+          {/* Messages List Skeleton */}
+          <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex gap-3 p-3 rounded-lg bg-muted/50">
+                <div className="w-8 h-8 rounded-full bg-muted animate-pulse flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-24 rounded-md bg-muted animate-pulse" />
+                  <div className="h-4 w-full rounded-md bg-muted animate-pulse" />
+                  <div className="h-4 w-4/5 rounded-md bg-muted animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Message Input Skeleton */}
+          <div className="border-t border-border p-4 flex gap-2">
+            <div className="flex-1 h-10 rounded-md bg-muted animate-pulse" />
+            <div className="w-16 h-10 rounded-md bg-muted animate-pulse" />
+          </div>
+        </div>
+
+        {/* Info Box Skeleton */}
+        <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border space-y-3">
+          <div className="h-5 w-48 rounded-md bg-muted animate-pulse" />
+          <div className="space-y-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-4 w-3/4 rounded-md bg-muted animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </main>
+
+      {/* Footer Skeleton */}
+      <footer className="border-t border-border py-4 text-center">
+        <div className="h-4 w-56 rounded-md bg-muted animate-pulse mx-auto" />
       </footer>
     </div>
   )

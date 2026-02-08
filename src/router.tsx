@@ -4,14 +4,10 @@ import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query
 import { ConvexQueryClient } from '@convex-dev/react-query'
 import { routeTree } from './routeTree.gen'
 import { NotFound } from './components/NotFound'
+import { env } from './lib/env'
 
 export function getRouter() {
-  const convexUrl = import.meta.env.VITE_CONVEX_URL
-  if (!convexUrl) {
-    throw new Error('VITE_CONVEX_URL is not set')
-  }
-
-  const convexQueryClient = new ConvexQueryClient(convexUrl)
+  const convexQueryClient = new ConvexQueryClient(env.VITE_CONVEX_URL)
 
   const queryClient: QueryClient = new QueryClient({
     defaultOptions: {
