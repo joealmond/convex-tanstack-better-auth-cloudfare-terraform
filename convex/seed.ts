@@ -60,14 +60,12 @@ export const run = mutation({
       return { seeded: false, reason: 'Data already exists' }
     }
 
-    // Insert sample messages with staggered timestamps
-    const now = Date.now()
+    // Insert sample messages
     for (let i = 0; i < SAMPLE_MESSAGES.length; i++) {
       const msg = SAMPLE_MESSAGES[i]!
       await ctx.db.insert('messages', {
         content: msg.content,
         authorName: msg.authorName,
-        createdAt: now - (SAMPLE_MESSAGES.length - i) * 60_000, // 1 minute apart
       })
     }
 

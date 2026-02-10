@@ -31,6 +31,12 @@ export const Route = createRootRouteWithContext<{
       { name: 'description', content: 'Production-ready full-stack template' },
     ],
     links: [{ rel: 'icon', href: '/favicon.ico' }],
+    scripts: [
+      {
+        // Prevent dark mode flash (FOUC) by applying theme before paint
+        children: `(function(){try{var t=localStorage.getItem('theme-preference');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches);document.documentElement.classList.toggle('dark',d)}catch(e){}}())`,
+      },
+    ],
   }),
   beforeLoad: async (ctx) => {
     const token = await getAuth()

@@ -108,7 +108,7 @@ export class MessageRepository extends Repository<'messages'> {
    * Get recent messages
    */
   async getRecent(limit: number = 50): Promise<Doc<'messages'>[]> {
-    return await this.ctx.db.query('messages').withIndex('by_created').order('desc').take(limit)
+    return await this.ctx.db.query('messages').order('desc').take(limit)
   }
 
   /**
@@ -118,7 +118,7 @@ export class MessageRepository extends Repository<'messages'> {
     return await this.ctx.db
       .query('messages')
       .filter((q) =>
-        q.or(q.gte(q.field('createdAt'), startTime), q.lte(q.field('createdAt'), endTime))
+        q.or(q.gte(q.field('_creationTime'), startTime), q.lte(q.field('_creationTime'), endTime))
       )
       .collect()
   }

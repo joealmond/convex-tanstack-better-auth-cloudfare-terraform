@@ -72,7 +72,7 @@ export class QueryFactory<T extends TableNames> {
 
     return await this.ctx.db
       .query(this.table)
-      .filter((q) => q.gte(q.field('createdAt'), cutoffTime))
+      .filter((q) => q.gte(q.field('_creationTime'), cutoffTime))
       .order('desc')
       .take(limit)
   }
@@ -84,7 +84,7 @@ export class QueryFactory<T extends TableNames> {
     return await this.ctx.db
       .query(this.table)
       .filter((q) =>
-        q.and(q.gte(q.field('createdAt'), startTime), q.lte(q.field('createdAt'), endTime))
+        q.and(q.gte(q.field('_creationTime'), startTime), q.lte(q.field('_creationTime'), endTime))
       )
       .collect()
   }
@@ -290,7 +290,6 @@ export const exampleCreateMessage = convexMutation({
   handler: async (ctx, args) => {
     const messageId = await ctx.db.insert('messages', {
       ...args,
-      createdAt: Date.now(),
     })
     return ResponseFactory.success({ messageId }, 'Message created')
   },

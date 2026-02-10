@@ -54,7 +54,7 @@ export default defineConfig(() => {
           manualChunks: {
             'react-vendor': ['react', 'react-dom'],
             'tanstack-vendor': ['@tanstack/react-router', '@tanstack/react-query'],
-            'convex-vendor': ['convex/react'],
+            'convex-vendor': ['@convex-dev/react-query'],
           },
         },
       },

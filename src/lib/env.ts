@@ -58,3 +58,8 @@ function getEnv(): Env {
 }
 
 export const env = getEnv()
+
+/** Convenience flags for environment checks */
+export const isDev = env.VITE_APP_ENV === 'development'
+export const isPreview = env.VITE_APP_ENV === 'preview'
+export const isProd = env.VITE_APP_ENV === 'production'

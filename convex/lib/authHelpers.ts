@@ -72,6 +72,21 @@ export async function getAuthUser(ctx: AuthContext): Promise<AuthUser | null> {
 }
 
 /**
+ * Get the authenticated user without throwing.
+ * Returns null on any error (important for SSR where auth may not be available).
+ *
+ * @param ctx - Convex query or mutation context
+ * @returns The authenticated user or null
+ */
+export async function getAuthUserSafe(ctx: AuthContext): Promise<AuthUser | null> {
+  try {
+    return await getAuthUser(ctx)
+  } catch {
+    return null
+  }
+}
+
+/**
  * Require authentication. Throws if not authenticated.
  *
  * @param ctx - Convex query or mutation context

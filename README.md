@@ -83,6 +83,7 @@ cp .env.example .env.local
 # Edit .env.local with your Convex URL
 
 # 3. Set Convex backend environment variables
+npx convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"
 npx convex env set SITE_URL "https://your-project.convex.site"
 npx convex env set GOOGLE_CLIENT_ID "your-google-client-id"
 npx convex env set GOOGLE_CLIENT_SECRET "your-google-client-secret"
@@ -175,29 +176,29 @@ terraform init && terraform apply
 
 ## Documentation
 
-| Topic                    | Link                                                       |
-| ------------------------ | ---------------------------------------------------------- |
-| **Architecture Guide**   | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)               |
-| **Rate Limiting** ⚡     | [docs/RATE_LIMITING.md](docs/RATE_LIMITING.md)             |
-| **Email with Resend** ⚡ | [docs/EMAIL_WITH_RESEND.md](docs/EMAIL_WITH_RESEND.md)     |
-| **Stripe Payments**      | [docs/STRIPE_PAYMENTS.md](docs/STRIPE_PAYMENTS.md)         |
-| **AI Integration**       | [docs/AI_INTEGRATION.md](docs/AI_INTEGRATION.md)           |
-| **File Uploads**         | [docs/FILE_UPLOADS.md](docs/FILE_UPLOADS.md)               |
-| **RBAC & Permissions**   | [docs/RBAC.md](docs/RBAC.md)                               |
-| **AI Guidelines**        | [docs/AI_GUIDELINES.md](docs/AI_GUIDELINES.md)             |
-| **Cloudflare Features**  | [docs/CLOUDFLARE_FEATURES.md](docs/CLOUDFLARE_FEATURES.md) |
-| **AI & Integrations**    | [docs/AI_INTEGRATIONS.md](docs/AI_INTEGRATIONS.md)         |
-| **CI/CD Options**        | [docs/CI_CD_OPTIONS.md](docs/CI_CD_OPTIONS.md)             |
-| **Optional Features**    | [docs/OPTIONAL_FEATURES.md](docs/OPTIONAL_FEATURES.md)     |
-| **Clerk Auth Setup**     | [docs/CLERK_SETUP.md](docs/CLERK_SETUP.md)                 |
-| **Vercel Deploy**        | [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md)               |
-| **Netlify Deploy**       | [docs/NETLIFY_SETUP.md](docs/NETLIFY_SETUP.md)             |
-| **Mobile (Capacitor)**   | [docs/MOBILE.md](docs/MOBILE.md)                           |
+| Topic                     | Link                                                           |
+| ------------------------- | -------------------------------------------------------------- |
+| **Architecture Guide**    | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                   |
+| **Rate Limiting** ⚡      | [docs/RATE_LIMITING.md](docs/RATE_LIMITING.md)                 |
+| **Email with Resend** ⚡  | [docs/EMAIL_WITH_RESEND.md](docs/EMAIL_WITH_RESEND.md)         |
+| **Stripe Payments**       | [docs/STRIPE_PAYMENTS.md](docs/STRIPE_PAYMENTS.md)             |
+| **AI Integration**        | [docs/AI_INTEGRATION.md](docs/AI_INTEGRATION.md)               |
+| **File Uploads**          | [docs/FILE_UPLOADS.md](docs/FILE_UPLOADS.md)                   |
+| **RBAC & Permissions**    | [docs/RBAC.md](docs/RBAC.md)                                   |
+| **AI Guidelines**         | [docs/AI_GUIDELINES.md](docs/AI_GUIDELINES.md)                 |
+| **Cloudflare Features**   | [docs/CLOUDFLARE_FEATURES.md](docs/CLOUDFLARE_FEATURES.md)     |
+| **AI & Integrations**     | [docs/AI_INTEGRATIONS.md](docs/AI_INTEGRATIONS.md)             |
+| **CI/CD Options**         | [docs/CI_CD_OPTIONS.md](docs/CI_CD_OPTIONS.md)                 |
+| **Optional Features**     | [docs/OPTIONAL_FEATURES.md](docs/OPTIONAL_FEATURES.md)         |
+| **Clerk Auth Setup**      | [docs/CLERK_SETUP.md](docs/CLERK_SETUP.md)                     |
+| **Vercel Deploy**         | [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md)                   |
+| **Netlify Deploy**        | [docs/NETLIFY_SETUP.md](docs/NETLIFY_SETUP.md)                 |
+| **Mobile (Capacitor)**    | [docs/MOBILE.md](docs/MOBILE.md)                               |
 | **Mobile Best Practices** | [docs/MOBILE_BEST_PRACTICES.md](docs/MOBILE_BEST_PRACTICES.md) |
-| **Future Roadmap**       | [docs/FUTURE_ROADMAP.md](docs/FUTURE_ROADMAP.md)           |
-| **Contributing**         | [CONTRIBUTING.md](CONTRIBUTING.md)                         |
-| **Changelog**            | [CHANGELOG.md](CHANGELOG.md)                               |
-| **Terraform**            | [infrastructure/README.md](infrastructure/README.md)       |
+| **Future Roadmap**        | [docs/FUTURE_ROADMAP.md](docs/FUTURE_ROADMAP.md)               |
+| **Contributing**          | [CONTRIBUTING.md](CONTRIBUTING.md)                             |
+| **Changelog**             | [CHANGELOG.md](CHANGELOG.md)                                   |
+| **Terraform**             | [infrastructure/README.md](infrastructure/README.md)           |
 
 ⚡ = Production-ready implementations included
 

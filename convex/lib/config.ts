@@ -18,8 +18,8 @@
  * 2. Deploy with `npx convex deploy` or let `npx convex dev` sync
  * 3. Sign in with that email - you're now an admin!
  *
- * Alternative: Use the Convex dashboard to run:
- *   users.setAdminByEmail({ email: "your@email.com", isAdmin: true })
+ * This is the recommended approach — it's simple, safe, and doesn't
+ * expose a public mutation for role changes.
  *
  * @example
  * ```ts

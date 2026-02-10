@@ -1,20 +1,6 @@
-import { query, mutation, type QueryCtx } from './_generated/server'
+import { query, mutation } from './_generated/server'
 import { v } from 'convex/values'
-import { requireAuth } from './lib/authHelpers'
-import { authComponent } from './auth'
-import type { AuthUser } from './lib/authHelpers'
-
-/**
- * Safely get the authenticated user without throwing.
- * Returns null if not authenticated (important for public queries).
- */
-async function getAuthUserSafe(ctx: QueryCtx): Promise<AuthUser | null> {
-  try {
-    return (await authComponent.getAuthUser(ctx)) as AuthUser | null
-  } catch {
-    return null
-  }
-}
+import { requireAuth, getAuthUserSafe } from './lib/authHelpers'
 
 // Generate an upload URL for file uploads
 export const generateUploadUrl = mutation({
@@ -43,7 +29,6 @@ export const saveFile = mutation({
       type: args.type,
       size: args.size,
       uploadedBy: user._id,
-      createdAt: Date.now(),
     })
   },
 })

@@ -2,167 +2,67 @@
  * Rate Limit Service
  * ===================
  *
- * Simple in-memory rate limiting service.
+ * Uses the @convex-dev/rate-limiter component for persistent, distributed
+ * rate limiting across all Convex function invocations.
  *
- * Benefits:
- * - Centralized rate limiting logic
- * - Configurable limits per operation
- * - Role-aware rate limiting
- * - No external dependencies
- *
- * Note: Uses Convex database for persistence. For enterprise-grade rate limiting
- * with distributed systems, consider using @convex-dev/rate-limiter component.
+ * The in-memory approach (Map) is broken for Convex because state doesn't
+ * persist across function invocations. This component stores rate limit
+ * state in the Convex database.
  *
  * Usage:
  * ```typescript
- * import { RateLimitService } from './lib/services/rateLimitService'
+ * import { rateLimiter } from './lib/services/rateLimitService'
  *
  * export const sendMessage = mutation({
  *   handler: async (ctx, args) => {
  *     const user = await requireAuth(ctx)
- *
- *     const rateLimitService = new RateLimitService(ctx)
- *     await rateLimitService.checkLimit('SEND_MESSAGE', user._id)
- *
+ *     await rateLimiter.limit(ctx, 'sendMessage', { key: user._id })
  *     // Continue with mutation logic
  *   }
  * })
  * ```
  */
 
-import type { MutationCtx } from '../../_generated/server'
-import { RATE_LIMITS, getRateLimitConfig, ROLE_MULTIPLIERS } from '../constants/rateLimits'
+import { RateLimiter } from '@convex-dev/rate-limiter'
+import { components } from '../../_generated/api'
 
 /**
- * Rate Limit Service Interface
+ * Rate limiter instance with predefined limits per operation.
+ *
+ * Uses token bucket algorithm:
+ * - `rate`: tokens added per `period`
+ * - `capacity`: max burst size
+ * - `period`: refill window in ms
+ *
+ * Throws ConvexError when limit exceeded.
  */
-export interface IRateLimitService {
-  checkLimit(
-    operation: keyof typeof RATE_LIMITS,
-    key: string,
-    role?: keyof typeof ROLE_MULTIPLIERS
-  ): Promise<void>
-
-  reset(operation: keyof typeof RATE_LIMITS, key: string): Promise<void>
-}
-
-// In-memory rate limit tracking (per-process)
-// Note: This is reset on deployment/restart. For production with multiple
-// workers, consider using Convex database tables or the @convex-dev/rate-limiter component.
-const rateLimitTracker = new Map<string, number[]>()
-
 /**
- * Production Rate Limit Service
- * Uses in-memory tracking with configurable limits
+ * Predefined rate limit configurations.
+ * Exported so middleware can pass config explicitly (needed for TS overload resolution).
  */
-export class RateLimitService implements IRateLimitService {
-  constructor(private ctx: MutationCtx) {}
+export const RATE_LIMIT_DEFS = {
+  // Message operations: 10 messages per minute, burst up to 15
+  sendMessage: { kind: 'token bucket' as const, rate: 10, period: 60_000, capacity: 15 },
 
-  async checkLimit(
-    operation: keyof typeof RATE_LIMITS,
-    key: string,
-    role: keyof typeof ROLE_MULTIPLIERS = 'user'
-  ): Promise<void> {
-    const config = getRateLimitConfig(operation, role)
-    const trackerKey = `${operation}:${key}`
-    const now = Date.now()
-    const windowStart = now - config.period
+  // File operations: 5 uploads per minute
+  uploadFile: { kind: 'token bucket' as const, rate: 5, period: 60_000, capacity: 10 },
 
-    // Get existing timestamps for this key
-    const timestamps = rateLimitTracker.get(trackerKey) || []
+  // File deletion: 20 per minute
+  deleteFile: { kind: 'token bucket' as const, rate: 20, period: 60_000, capacity: 25 },
 
-    // Filter out old timestamps outside the current window
-    const recentTimestamps = timestamps.filter((ts) => ts > windowStart)
+  // General API: 60 per minute
+  apiCall: { kind: 'token bucket' as const, rate: 60, period: 60_000, capacity: 80 },
 
-    // Check if limit exceeded
-    if (recentTimestamps.length >= config.maxTokens) {
-      const oldestTimestamp = recentTimestamps[0]!
-      const resetIn = Math.ceil((oldestTimestamp + config.period - now) / 1000)
-      throw new Error(`Rate limit exceeded for ${operation}. Try again in ${resetIn} seconds.`)
-    }
+  // Auth: 5 login attempts per minute
+  loginAttempt: { kind: 'token bucket' as const, rate: 5, period: 60_000, capacity: 5 },
 
-    // Add current timestamp
-    recentTimestamps.push(now)
-    rateLimitTracker.set(trackerKey, recentTimestamps)
+  // Registration: 3 per hour
+  registerUser: { kind: 'token bucket' as const, rate: 3, period: 3_600_000, capacity: 3 },
 
-    // Cleanup: periodically remove old entries to prevent memory leak
-    if (Math.random() < 0.01) {
-      // 1% chance to cleanup
-      this.cleanup()
-    }
-
-    void this.ctx // Use ctx if needed for database-backed rate limiting
-  }
-
-  async reset(operation: keyof typeof RATE_LIMITS, key: string): Promise<void> {
-    const trackerKey = `${operation}:${key}`
-    rateLimitTracker.delete(trackerKey)
-    void this.ctx
-  }
-
-  private cleanup(): void {
-    const now = Date.now()
-    for (const [key, timestamps] of rateLimitTracker.entries()) {
-      // Remove entries older than 5 minutes
-      const filtered = timestamps.filter((ts) => ts > now - 300000)
-      if (filtered.length === 0) {
-        rateLimitTracker.delete(key)
-      } else {
-        rateLimitTracker.set(key, filtered)
-      }
-    }
-  }
+  // Email: 10 per hour
+  sendEmail: { kind: 'token bucket' as const, rate: 10, period: 3_600_000, capacity: 10 },
 }
 
-/**
- * Mock Rate Limit Service for Testing
- * Tracks all rate limit checks without enforcing them
- */
-export class MockRateLimitService implements IRateLimitService {
-  public checks: Array<{
-    operation: keyof typeof RATE_LIMITS
-    key: string
-    role?: keyof typeof ROLE_MULTIPLIERS
-  }> = []
+export type RateLimitName = keyof typeof RATE_LIMIT_DEFS
 
-  async checkLimit(
-    operation: keyof typeof RATE_LIMITS,
-    key: string,
-    role: keyof typeof ROLE_MULTIPLIERS = 'user'
-  ): Promise<void> {
-    this.checks.push({ operation, key, role })
-    // Never throws - allows all operations in tests
-  }
-
-  async reset(operation: keyof typeof RATE_LIMITS, key: string): Promise<void> {
-    // Remove all checks for this operation/key
-    this.checks = this.checks.filter(
-      (check) => !(check.operation === operation && check.key === key)
-    )
-  }
-
-  /** Get all checks for testing assertions */
-  getChecks() {
-    return this.checks
-  }
-
-  /** Clear all checks */
-  clear() {
-    this.checks = []
-  }
-}
-
-/**
- * Service Factory
- * Returns appropriate rate limit service based on environment
- */
-export function createRateLimitService(ctx: MutationCtx): IRateLimitService {
-  const isDevelopment = process.env.NODE_ENV === 'development'
-  const isTest = process.env.NODE_ENV === 'test'
-
-  if (isDevelopment || isTest) {
-    return new MockRateLimitService()
-  }
-
-  return new RateLimitService(ctx)
-}
+export const rateLimiter = new RateLimiter(components.rateLimiter, RATE_LIMIT_DEFS)

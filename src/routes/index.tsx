@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { api } from '@convex/_generated/api'
 import { useSession, signIn, signOut } from '@/lib/auth-client'
@@ -10,6 +10,9 @@ import { useState, Suspense } from 'react'
 import type { Id } from '@convex/_generated/dataModel'
 
 export const Route = createFileRoute('/')({
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(convexQuery(api.messages.list, {}))
+  },
   component: HomePage,
 })
 
@@ -23,9 +26,7 @@ function HomePage() {
 
 function HomePageContent() {
   const { data: session, isPending: isSessionLoading } = useSession()
-  const { data: messages, isLoading: isMessagesLoading } = useQuery(
-    convexQuery(api.messages.list, {})
-  )
+  const { data: messages } = useSuspenseQuery(convexQuery(api.messages.list, {}))
 
   const [newMessage, setNewMessage] = useState('')
   const sendMessage = useConvexMutation(api.messages.send)
@@ -78,7 +79,7 @@ function HomePageContent() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-primary" />
@@ -89,6 +90,7 @@ function HomePageContent() {
             <Link
               to="/files"
               className="text-muted-foreground hover:text-foreground transition-colors"
+              preload="intent"
             >
               Files
             </Link>
@@ -141,11 +143,7 @@ function HomePageContent() {
         <div className="bg-card rounded-lg border border-border shadow-sm">
           {/* Messages List */}
           <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto">
-            {isMessagesLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : messages?.length === 0 ? (
+            {messages?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>No messages yet. Be the first to say hello!</p>
@@ -166,7 +164,7 @@ function HomePageContent() {
                           {message.authorName ?? 'Anonymous'}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {formatRelativeTime(message.createdAt)}
+                          {formatRelativeTime(message._creationTime)}
                         </span>
                       </div>
                       <p className="text-foreground mt-1">{message.content}</p>
@@ -261,7 +259,7 @@ function HomePageSkeleton() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header Skeleton */}
-      <header className="border-b border-border bg-card">
+      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-muted animate-pulse" />

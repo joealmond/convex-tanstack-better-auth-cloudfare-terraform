@@ -2,13 +2,13 @@ import { query, mutation, type MutationCtx } from './_generated/server'
 import { v } from 'convex/values'
 import { requireAuth, requireAdmin } from './lib/authHelpers'
 import { authComponent } from './auth'
-import { RateLimitService } from './lib/services/rateLimitService'
+import { rateLimiter } from './lib/services/rateLimitService'
 
 // List all messages (public)
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query('messages').withIndex('by_created').order('desc').take(50)
+    return await ctx.db.query('messages').order('desc').take(50)
   },
 })
 
@@ -18,6 +18,11 @@ export const send = mutation({
     content: v.string(),
   },
   handler: async (ctx: MutationCtx, args) => {
+    // Content validation
+    const trimmed = args.content.trim()
+    if (trimmed.length === 0) throw new Error('Message cannot be empty')
+    if (trimmed.length > 2000) throw new Error('Message too long (max 2000 characters)')
+
     // Get user if authenticated (but don't require it)
     let user = null
     try {
@@ -28,14 +33,12 @@ export const send = mutation({
 
     // Rate limit: use user ID if authenticated, otherwise use a generic key
     const rateLimitKey = user?._id || 'anonymous'
-    const rateLimitService = new RateLimitService(ctx)
-    await rateLimitService.checkLimit('SEND_MESSAGE', rateLimitKey, user ? 'user' : 'guest')
+    await rateLimiter.limit(ctx, 'sendMessage', { key: rateLimitKey })
 
     return await ctx.db.insert('messages', {
-      content: args.content,
+      content: trimmed,
       authorId: user?._id,
       authorName: user?.name ?? 'Anonymous',
-      createdAt: Date.now(),
     })
   },
 })

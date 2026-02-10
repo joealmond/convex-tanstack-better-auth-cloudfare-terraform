@@ -2,18 +2,21 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { api } from '@convex/_generated/api'
-import { useSession, signIn } from '@/lib/auth-client'
+import { useSession } from '@/lib/auth-client'
 import { formatFileSize, formatRelativeTime } from '@/lib/utils'
-import { Upload, File, Trash2, ArrowLeft, Loader2, LogIn, Download } from 'lucide-react'
+import { Upload, File, Trash2, ArrowLeft, Loader2, Download } from 'lucide-react'
 import { useState, useRef } from 'react'
 import type { Id } from '@convex/_generated/dataModel'
+import { toast } from 'sonner'
 
-export const Route = createFileRoute('/files')({
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
+export const Route = createFileRoute('/_authenticated/files')({
   component: FilesPage,
 })
 
 function FilesPage() {
-  const { data: session, isPending: isSessionLoading } = useSession()
+  const { isPending: isSessionLoading } = useSession()
   const { data: files, isLoading: isFilesLoading } = useQuery(
     convexQuery(api.files.listMyFiles, {})
   )
@@ -29,6 +32,13 @@ function FilesPage() {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // Client-side file size validation
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('File too large. Maximum size is 10MB.')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
 
     setIsUploading(true)
     setUploadProgress('Getting upload URL...')
@@ -63,9 +73,11 @@ function FilesPage() {
       })
 
       setUploadProgress('')
+      toast.success('File uploaded successfully!')
     } catch (error) {
       console.error('Upload failed:', error)
-      setUploadProgress('Upload failed!')
+      toast.error('Upload failed. Please try again.')
+      setUploadProgress('')
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) {
@@ -79,45 +91,11 @@ function FilesPage() {
 
     try {
       await deleteFile({ id: id as Id<'files'> })
+      toast.success('File deleted.')
     } catch (error) {
       console.error('Delete failed:', error)
+      toast.error('Failed to delete file.')
     }
-  }
-
-  const handleSignIn = () => {
-    signIn.social({
-      provider: 'google',
-      callbackURL: '/files',
-    })
-  }
-
-  // Not authenticated
-  if (!isSessionLoading && !session?.user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <File className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h1 className="text-2xl font-bold mb-2">File Storage Demo</h1>
-          <p className="text-muted-foreground mb-6">
-            Sign in to upload and manage your files using Convex storage.
-          </p>
-          <button
-            onClick={handleSignIn}
-            className="flex items-center gap-2 px-6 py-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors mx-auto"
-          >
-            <LogIn className="w-5 h-5" />
-            Sign in with Google
-          </button>
-          <Link
-            to="/"
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mt-4 justify-center"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -146,6 +124,7 @@ function FilesPage() {
         {/* Upload Section */}
         <div className="bg-card rounded-lg border border-border p-6 mb-6">
           <h2 className="font-semibold mb-4">Upload a File</h2>
+          <p className="text-sm text-muted-foreground mb-4">Maximum file size: 10MB</p>
 
           <div className="flex items-center gap-4">
             <input
@@ -198,7 +177,7 @@ function FilesPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{file.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {formatFileSize(file.size)} • {formatRelativeTime(file.createdAt)}
+                      {formatFileSize(file.size)} • {formatRelativeTime(file._creationTime)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
