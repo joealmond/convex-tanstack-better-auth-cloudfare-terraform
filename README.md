@@ -193,6 +193,7 @@ terraform init && terraform apply
 | **Vercel Deploy**        | [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md)               |
 | **Netlify Deploy**       | [docs/NETLIFY_SETUP.md](docs/NETLIFY_SETUP.md)             |
 | **Mobile (Capacitor)**   | [docs/MOBILE.md](docs/MOBILE.md)                           |
+| **Mobile Best Practices** | [docs/MOBILE_BEST_PRACTICES.md](docs/MOBILE_BEST_PRACTICES.md) |
 | **Future Roadmap**       | [docs/FUTURE_ROADMAP.md](docs/FUTURE_ROADMAP.md)           |
 | **Contributing**         | [CONTRIBUTING.md](CONTRIBUTING.md)                         |
 | **Changelog**            | [CHANGELOG.md](CHANGELOG.md)                               |

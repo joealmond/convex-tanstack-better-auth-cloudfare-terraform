@@ -204,3 +204,68 @@ npm run dev     # Terminal 2
 - Ensure auth-client.ts has NO `baseURL` property
 - Verify API route exists at `src/routes/api/auth/$.ts`
 - Check `convexClient()` plugin is registered
+
+---
+
+## Lessons Learned (from Production Usage)
+
+### `expectAuth: true` Blocks Anonymous Users
+
+Setting `expectAuth: true` on `ConvexQueryClient` causes **all** queries to wait for auth to resolve. If the user is unauthenticated, queries never fire — breaking public features.
+
+```typescript
+// ❌ Blocks anonymous users — all queries wait for auth
+const convexQueryClient = new ConvexQueryClient(convexClient, {
+  expectAuth: true,
+})
+
+// ✅ Works for hybrid apps with both public and authenticated features
+const convexQueryClient = new ConvexQueryClient(convexClient)
+```
+
+**When to use `expectAuth: true`:**
+- Admin panels where every page requires login
+- Internal tools with no public routes
+
+**When NOT to use it:**
+- Public product listings, blogs, marketing sites
+- Apps with anonymous features (voting, commenting)
+- Hybrid apps where some routes are public and others protected
+
+### Auth Pattern Standardization
+
+Two auth patterns coexist:
+
+```typescript
+// Pattern A: Convex built-in (JWT claims)
+const identity = await ctx.auth.getUserIdentity()
+// Returns: { subject, email, tokenIdentifier, ... }
+
+// Pattern B: Better Auth component (full user record)
+const user = await authComponent.getAuthUser(ctx)
+// Returns: full Better Auth user with id, name, email, role, etc.
+```
+
+**Recommendation**: If using Better Auth, prefer `authComponent.getAuthUser()` everywhere with a safe wrapper for queries that should work for anonymous users:
+
+```typescript
+// convex/lib/authHelpers.ts
+export async function getAuthUserSafe(ctx: QueryCtx) {
+  try {
+    return await authComponent.getAuthUser(ctx)
+  } catch {
+    return null  // Anonymous user — let the query proceed
+  }
+}
+```
+
+### `VITE_CONVEX_SITE_URL` Fallback
+
+The site URL is always the cloud URL with `.cloud` replaced by `.site`. Reduce required env vars:
+
+```typescript
+// src/lib/auth-server.ts
+convexSiteUrl: env.VITE_CONVEX_SITE_URL
+  ?? env.VITE_CONVEX_URL.replace('.cloud', '.site'),
+```
+

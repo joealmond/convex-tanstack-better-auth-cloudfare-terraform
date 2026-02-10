@@ -516,3 +516,71 @@ These are recommended in `.vscode/extensions.json`:
 | `bradlc.vscode-tailwindcss` | Tailwind autocomplete |
 | `hashicorp.terraform`       | Terraform support     |
 | `usernamehw.errorlens`      | Inline errors         |
+
+---
+
+## Template Feature Status
+
+Features evaluated for this template. Items marked ✅ are included; others are optional additions.
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| shadcn/ui components | ⚠️ Not included | Template has `cn()` utility but no pre-built components. Add with `npx shadcn@latest init` |
+| Testing (Vitest) | ✅ Included | `vitest` + `happy-dom` + `@testing-library/react` |
+| Toast notifications | ⚠️ Suggested | Add `sonner` — easy setup, commonly needed |
+| Protected routes | ✅ Included | `_authenticated.tsx` layout pattern |
+| Form handling | ⚠️ Suggested | `react-hook-form` + `@hookform/resolvers` + `zod` |
+| 404/Error routes | ✅ Included | `NotFound` component + `defaultNotFoundComponent` |
+| i18n | ⚠️ Suggested | Static JSON imports pattern (see Architecture doc) |
+| Database seeding | ⚠️ Suggested | `npx convex run seed:seedData` |
+| Rate limiting | ✅ Included | `@convex-dev/rate-limiter` with token bucket |
+| Charts | ⚠️ Optional | `recharts` for data visualization |
+
+---
+
+## Security Checklist
+
+Before deploying to production:
+
+- [ ] Set strong `BETTER_AUTH_SECRET` (32+ random characters via `openssl rand -base64 32`)
+- [ ] Configure CSP headers in Cloudflare (via `wrangler.jsonc` or Cloudflare dashboard)
+- [ ] Enable rate limiting on auth endpoints
+- [ ] Set up monitoring and alerting (Sentry, Cloudflare analytics)
+- [ ] Review admin email whitelist in Convex config
+- [ ] Enable Cloudflare security features (WAF, bot protection)
+- [ ] Restrict OAuth redirect URIs to production domains only
+- [ ] Audit all `import.meta.env` usage — no secrets in `VITE_` prefixed vars
+- [ ] Test CORS configuration matches production origins
+
+---
+
+## Upgrade Guide
+
+### Upgrading TanStack Packages
+
+TanStack packages are versioned together. Update all at once:
+
+```bash
+npm update @tanstack/react-start @tanstack/react-router @tanstack/react-query @tanstack/react-router-ssr-query
+```
+
+### Upgrading Convex
+
+```bash
+npx convex update
+npm update convex @convex-dev/better-auth @convex-dev/react-query
+```
+
+### Upgrading Cloudflare
+
+```bash
+npm update wrangler @cloudflare/vite-plugin
+```
+
+Check `compatibility_date` in `wrangler.jsonc` and update to a recent date.
+
+### Known Breaking Changes
+
+- **TanStack Start v1.154+**: `start.tsx` and `server.ts` entry points simplified (see Architecture doc)
+- **Convex 1.30+**: New auth patterns — check `@convex-dev/better-auth` migration notes
+- **Cloudflare Vite Plugin**: `nodejs_compat` auto-added — use `nodejs_compat_v2` to avoid duplicates

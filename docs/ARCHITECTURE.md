@@ -760,4 +760,201 @@ export class ErrorBoundary extends Component<Props, State> {
 
 ---
 
+## TanStack Start Entry Points (v1.154+)
+
+As of TanStack Start v1.154+, the client and server entry points have been simplified. Using the old patterns will cause build errors.
+
+### Client Entry Point (`src/start.tsx`)
+
+```typescript
+// ✅ v1.154+ — framework handles hydration automatically
+export const startInstance = undefined
+
+// ❌ Old pattern — do NOT use
+// import { hydrateRoot } from 'react-dom/client'
+// hydrateRoot(document.getElementById('root')!, <StartClient router={router} />)
+```
+
+### Server Entry Point (`src/server.ts`)
+
+```typescript
+// ✅ v1.154+ — use default handler, no manual router passing
+import handler from '@tanstack/react-start/server-entry'
+
+export default {
+  fetch(request: Request) {
+    return handler.fetch(request)
+  },
+}
+
+// ❌ Old pattern — do NOT use
+// import { createStartHandler } from '@tanstack/react-start'
+// const handler = createStartHandler({ router })
+```
+
+---
+
+## Cloudflare Workers Gotchas
+
+### `nodejs_compat_v2` Flag
+
+The Cloudflare Vite plugin automatically adds `nodejs_compat`. If you also specify it manually in `wrangler.jsonc`, you'll get a duplicate flag error. Use `nodejs_compat_v2` instead:
+
+```jsonc
+{
+  "compatibility_flags": ["nodejs_compat_v2"]
+}
+```
+
+### No Dynamic `import.meta.env` Access
+
+Cloudflare Workers' build pipeline statically analyzes `import.meta.env` references. Casting `import.meta` to `any` and then accessing `.env` dynamically will fail:
+
+```typescript
+// ❌ Breaks in Cloudflare Workers
+const url = (import.meta as any).env.VITE_CONVEX_URL
+
+// ✅ Works everywhere — direct property access
+const url = import.meta.env.VITE_CONVEX_URL
+```
+
+### No `Buffer` in Convex V8 Runtime
+
+The Convex runtime uses V8, which doesn't have Node.js `Buffer`. Use web-standard APIs:
+
+```typescript
+// ❌ Not available in Convex
+Buffer.from(data).toString('base64')
+
+// ✅ Use web-standard btoa()
+btoa(String.fromCharCode(...new Uint8Array(data)))
+```
+
+---
+
+## Convex Schema: Better Auth User IDs
+
+When using Better Auth with Convex, user IDs in the schema must be strings, not Convex document IDs. Better Auth manages its own user table with string UUIDs.
+
+```typescript
+// ✅ Correct — Better Auth IDs are strings
+votes: defineTable({
+  userId: v.optional(v.string()),
+  productId: v.id('products'),
+}),
+
+profiles: defineTable({
+  userId: v.string(),  // String, not v.id('users')!
+}),
+
+// ❌ Wrong — will cause type errors
+votes: defineTable({
+  userId: v.id('users'),  // Better Auth doesn't use Convex IDs
+}),
+```
+
+---
+
+## Environment Validation with Zod
+
+Validate all environment variables at startup to fail fast with clear error messages:
+
+```typescript
+// src/lib/env.ts
+import { z } from 'zod'
+
+const envSchema = z.object({
+  VITE_CONVEX_URL: z.string().url(),
+  VITE_CONVEX_SITE_URL: z.string().url().optional(),
+})
+
+const serverEnvSchema = z.object({
+  GOOGLE_CLIENT_ID: z.string().min(1),
+  GOOGLE_CLIENT_SECRET: z.string().min(1),
+  SITE_URL: z.string().url(),
+})
+
+export const env = envSchema.parse(import.meta.env)
+
+// Auto-derive SITE_URL from CONVEX_URL if not set
+export const convexSiteUrl = env.VITE_CONVEX_SITE_URL
+  ?? env.VITE_CONVEX_URL.replace('.cloud', '.site')
+```
+
+---
+
+## Recommended Patterns
+
+### Anonymous User ID Management
+
+For apps with anonymous features (voting, commenting before sign-up):
+
+```typescript
+// src/hooks/use-anonymous-id.ts
+const ANON_ID_KEY = 'anonymous_user_id'
+
+export function useAnonymousId() {
+  const [anonId, setAnonId] = useState<string | null>(null)
+
+  useEffect(() => {
+    let id = localStorage.getItem(ANON_ID_KEY)
+    if (!id) {
+      id = `anon_${crypto.randomUUID()}`
+      localStorage.setItem(ANON_ID_KEY, id)
+    }
+    setAnonId(id)
+  }, [])
+
+  return { anonId, clearAnonId: () => localStorage.removeItem(ANON_ID_KEY) }
+}
+```
+
+Migrate anonymous data on sign-up:
+
+```typescript
+// convex/votes.ts
+export const migrateAnonymousVotes = mutation({
+  args: { anonymousId: v.string() },
+  handler: async (ctx, { anonymousId }) => {
+    const user = await requireAuth(ctx)
+    const anonVotes = await ctx.db
+      .query('votes')
+      .withIndex('by_anonymous_id', q => q.eq('anonymousId', anonymousId))
+      .collect()
+    for (const vote of anonVotes) {
+      await ctx.db.patch(vote._id, { userId: user._id, anonymousId: undefined, isAnonymous: false })
+    }
+  }
+})
+```
+
+### Geolocation Hook
+
+```typescript
+// src/hooks/use-geolocation.ts
+export function useGeolocation() {
+  const [state, setState] = useState<{
+    loading: boolean; error: string | null
+    coords: { latitude: number; longitude: number } | null
+  }>({ loading: false, error: null, coords: null })
+
+  const requestLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setState(s => ({ ...s, error: 'Geolocation not supported' }))
+      return
+    }
+    setState(s => ({ ...s, loading: true, error: null }))
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setState({ loading: false, error: null, coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude } }),
+      (err) => setState({ loading: false, error: err.message, coords: null }),
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }, [])
+
+  return { ...state, requestLocation }
+}
+```
+
+---
+
 **Remember**: Start simple. Only add patterns when you feel the pain of repetition. Don't over-engineer early.
